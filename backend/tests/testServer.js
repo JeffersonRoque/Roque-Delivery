@@ -1,24 +1,24 @@
-const express = require("express");
-const pessoaRoutes = require('../routes/pessoaRoutes');
-const { Sequelize } = require('sequelize');
-const config = require('../config/config.json');
-
-const sequelize = new Sequelize(config.development);
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const routes = require('../src/routes'); // Certifique-se de apontar para suas rotas
+const { sequelize } = require('../src/models'); // Importa o Sequelize para garantir conexão ao banco
 
 const app = express();
-module.exports = app; // Exporte o app corretamente para os testes
-app.use(express.json());
 
-// Rotas
-app.use('/pessoas', pessoaRoutes);
+// Middlewares
+app.use(cors());
+app.use(bodyParser.json());
+app.use('/api', routes); // Define o prefixo das rotas
 
-// Teste de conexão com o banco
-sequelize.authenticate()
-    .then(() => console.log('Banco de dados conectado'))
-    .catch(err => console.error('Erro ao conectar no banco:', err));
+// Conecta ao banco antes de rodar os testes
+beforeAll(async () => {
+  await sequelize.sync({ force: true }); // Limpa o banco antes dos testes
+});
 
-app.get("/", (req, res) => res.send("Servidor rodando!"));
+// Fecha a conexão depois dos testes
+afterAll(async () => {
+  await sequelize.close();
+});
 
-const http = require('http');
-const server = http.createServer(app);
-module.exports = server; // Exporte o servidor para testes
+module.exports = app;

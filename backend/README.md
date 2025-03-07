@@ -16,10 +16,11 @@ backend/
 │── config/            # Configuração do banco de dados (config.js)
 │── controllers/       # Lógica das rotas
 │── models/            # Definição das tabelas do banco
-│── routes/            # Rotas da API
-│── tests/             # Testes automatizados (Jest + Supertest)
 │── testserver.js      # Servidor para testes
-│── server.js          # Servidor principal da API
+│── src/               # Rota principal do código
+│   ── routes/            # Rotas da API
+│   ── tests/             # Testes automatizados (Jest + Supertest)
+│   ── server.js          # Servidor principal da API
 │── .env               # Configurações sensíveis (NÃO subir no GitHub)
 │── package.json       # Dependências e scripts
 │── README.md          # Documentação do backend
