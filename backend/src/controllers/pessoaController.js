@@ -1,4 +1,4 @@
-const Pessoa = require('../models/pessoa');
+const { Pessoa } = require('../models'); // Importando corretamente do index.js
 
 exports.getAllPessoas = async (req, res) => {
     try {
@@ -11,10 +11,20 @@ exports.getAllPessoas = async (req, res) => {
 
 exports.createPessoa = async (req, res) => {
     try {
-        const pessoa = await Pessoa.create(req.body);
-        res.status(201).json(pessoa);
+        console.log("Recebendo requisição para criar pessoa:", req.body); // Debug
+
+        const { nome, email, senha_hash, tipo_pessoa } = req.body;
+
+        if (!nome || !email || !senha_hash || !tipo_pessoa) {
+            return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+        }
+
+        const pessoa = await Pessoa.create({ nome, email, senha_hash, tipo_pessoa });
+
+        return res.status(201).json(pessoa);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao criar pessoa' });
+        console.error("Erro ao criar pessoa:", error); // Log do erro
+        return res.status(500).json({ error: 'Erro ao criar pessoa', details: error.message });
     }
 };
 
@@ -58,3 +68,5 @@ exports.deletePessoa = async (req, res) => {
         res.status(500).json({ error: 'Erro ao deletar pessoa' });
     }
 };
+
+console.log("Modelo Pessoa carregado:", Pessoa);

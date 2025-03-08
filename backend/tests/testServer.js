@@ -9,7 +9,7 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(bodyParser.json());
-app.use('/api', routes); // Define o prefixo das rotas
+app.use('/api/pessoas', routes); // Define o prefixo das rotas
 
 // Conecta ao banco antes de rodar os testes
 beforeAll(async () => {

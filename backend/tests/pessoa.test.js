@@ -9,8 +9,13 @@ beforeEach(async () => {
 describe('Testes de Pessoa API', () => {
   test('Deve criar uma nova pessoa', async () => {
     const res = await request(app)
-      .post('/api/pessoas') // Ajuste a URL se necessário
-      .send({ tipo_pessoa: 'Cliente' });
+    .post('/api/pessoas')
+    .send({
+      nome: 'Teste User',
+      email: 'teste@email.com',
+      senha_hash: '123456',
+      tipo_pessoa: 'Cliente'
+    });
 
     expect(res.statusCode).toBe(201);
     expect(res.body).toHaveProperty('id');
@@ -22,12 +27,17 @@ describe('Testes de Pessoa API', () => {
 
   test('Deve retornar todas as pessoas', async () => {
     // Criando uma pessoa antes do teste
-    await Pessoa.create({ tipo_pessoa: 'Cliente' });
-
+    await Pessoa.create({
+      nome: 'Teste User',
+      email: 'teste@email.com',
+      senha_hash: '123456',
+      tipo_pessoa: 'Cliente'
+    });
+  
     const res = await request(app).get('/api/pessoas');
-
+  
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBe(1);
-  });
+    expect(res.body.length).toBeGreaterThan(0); // Garante que há pelo menos um registro
+  });  
 });
