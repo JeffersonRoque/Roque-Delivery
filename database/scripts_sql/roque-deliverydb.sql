@@ -8,8 +8,8 @@ CREATE TABLE Pessoas (
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     senha_hash TEXT NOT NULL,
-    telefone VARCHAR(20),
-    endereco TEXT,
+    telefone VARCHAR(20) UNIQUE NOT NULL,
+    endereco TEXT NOT NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -58,6 +58,7 @@ CREATE TABLE Produtos (
     descricao TEXT,
     preco DECIMAL(10,2) NOT NULL,
     estoque INT NOT NULL CHECK (estoque >= 0),
+    categorias VARCHAR(50),
 	eh_alcoolico BOOLEAN DEFAULT FALSE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -158,8 +159,7 @@ CREATE TABLE Cupons (
     quantidade_usos INT DEFAULT 1,
     ativo BOOLEAN DEFAULT TRUE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    modificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	
+    modificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,	
 	-- Constraint para impedir a criação de cupons vencidos
     CONSTRAINT chk_cupom_validade CHECK (validade > NOW() OR validade IS NULL)
 );

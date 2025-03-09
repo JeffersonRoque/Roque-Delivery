@@ -24,11 +24,18 @@ module.exports = (sequelize) => {
             type: DataTypes.TEXT,
             allowNull: false
         },
-        telefone: DataTypes.STRING,
-        endereco: DataTypes.TEXT
+        telefone: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true // Agora o telefone deve ser único
+        },
+        endereco: {
+            type: DataTypes.TEXT,
+            allowNull: false // O endereço também é obrigatório
+        }
     }, {
         timestamps: true,
-        tableName: 'Pessoas'
+        tableName: 'pessoas'
     });
 
     return Pessoa;

@@ -13,17 +13,17 @@ exports.createPessoa = async (req, res) => {
     try {
         console.log("Recebendo requisição para criar pessoa:", req.body); // Debug
 
-        const { nome, email, senha_hash, tipo_pessoa } = req.body;
+        const { nome, email, senha_hash, tipo_pessoa, telefone, endereco } = req.body;
 
-        if (!nome || !email || !senha_hash || !tipo_pessoa) {
+        if (!nome || !email || !senha_hash || !tipo_pessoa || !telefone || !endereco) {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
         }
 
-        const pessoa = await Pessoa.create({ nome, email, senha_hash, tipo_pessoa });
+        const novaPessoa = await Pessoa.create({ nome, email, senha_hash, tipo_pessoa, telefone, endereco });
 
-        return res.status(201).json(pessoa);
+        return res.status(201).json(novaPessoa);
     } catch (error) {
-        console.error("Erro ao criar pessoa:", error); // Log do erro
+        console.error("Erro ao criar pessoa:", error);
         return res.status(500).json({ error: 'Erro ao criar pessoa', details: error.message });
     }
 };

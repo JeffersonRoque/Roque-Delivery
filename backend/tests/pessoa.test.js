@@ -14,7 +14,9 @@ describe('Testes de Pessoa API', () => {
       nome: 'Teste User',
       email: 'teste@email.com',
       senha_hash: '123456',
-      tipo_pessoa: 'Cliente'
+      tipo_pessoa: 'Cliente',
+      telefone: '35 9 9786-1415',
+      endereco: 'rua abc 20'
     });
 
     expect(res.statusCode).toBe(201);
@@ -31,7 +33,9 @@ describe('Testes de Pessoa API', () => {
       nome: 'Teste User',
       email: 'teste@email.com',
       senha_hash: '123456',
-      tipo_pessoa: 'Cliente'
+      tipo_pessoa: 'Cliente',
+      telefone: '35 9 9786-1415', 
+      endereco: 'rua abc 20'     
     });
   
     const res = await request(app).get('/api/pessoas');
