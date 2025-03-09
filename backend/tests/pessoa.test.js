@@ -14,7 +14,7 @@ describe('Testes de Pessoa API', () => {
       nome: 'Teste User',
       email: 'teste@email.com',
       senha_hash: '123456',
-      tipo_pessoa: 'Cliente',
+      tipo_pessoa: 'fisica',
       telefone: '35 9 9786-1415',
       endereco: 'rua abc 20'
     });
@@ -23,7 +23,7 @@ describe('Testes de Pessoa API', () => {
     expect(res.body).toHaveProperty('id');
 
     // Confirma que a pessoa foi salva no banco
-    const pessoa = await Pessoa.findOne({ where: { tipo_pessoa: 'Cliente' } });
+    const pessoa = await Pessoa.findOne({ where: { tipo_pessoa: 'fisica' } });
     expect(pessoa).not.toBeNull();
   });
 
@@ -33,7 +33,7 @@ describe('Testes de Pessoa API', () => {
       nome: 'Teste User',
       email: 'teste@email.com',
       senha_hash: '123456',
-      tipo_pessoa: 'Cliente',
+      tipo_pessoa: 'fisica',
       telefone: '35 9 9786-1415', 
       endereco: 'rua abc 20'     
     });

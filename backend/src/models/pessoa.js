@@ -8,7 +8,7 @@ module.exports = (sequelize) => {
             primaryKey: true
         },
         tipo_pessoa: {
-            type: DataTypes.STRING,
+            type: DataTypes.ENUM('fisica', 'juridica'),
             allowNull: false
         },
         nome: {
@@ -27,11 +27,11 @@ module.exports = (sequelize) => {
         telefone: {
             type: DataTypes.STRING,
             allowNull: false,
-            unique: true // Agora o telefone deve ser único
+            unique: true
         },
         endereco: {
             type: DataTypes.TEXT,
-            allowNull: false // O endereço também é obrigatório
+            allowNull: false
         }
     }, {
         timestamps: true,
