@@ -16,37 +16,35 @@ CREATE TABLE Pessoas (
 
 -- Tabela para cadastro de pessoas fisicas
 CREATE TABLE Pessoa_Fisica (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    pessoa_id UUID UNIQUE NOT NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES Pessoas(id) ON DELETE CASCADE,
+--  pessoa_id UUID UNIQUE NOT NULL REFERENCES Pessoas(id) ON DELETE CASCADE,
     cpf_hash TEXT UNIQUE,
-    data_nascimento DATE,
-    FOREIGN KEY (pessoa_id) REFERENCES Pessoas(id) ON DELETE CASCADE
+    data_nascimento DATE
 );
 
 -- Tabela para cadastro de empresas
 CREATE TABLE Pessoa_Juridica (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    pessoa_id UUID UNIQUE NOT NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES Pessoas(id) ON DELETE CASCADE,
+--  pessoa_id UUID UNIQUE NOT NULL REFERENCES Pessoas(id) ON DELETE CASCADE,
     cnpj VARCHAR(18) UNIQUE,
     razao_social VARCHAR(255) NOT NULL,
     nome_fantasia VARCHAR(255),
     inscricao_estadual VARCHAR(50),
-	eh_empresa BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (pessoa_id) REFERENCES Pessoas(id) ON DELETE CASCADE
+	eh_empresa BOOLEAN DEFAULT TRUE
 );
 
 -- Tabela para cadastro de funcionários
 CREATE TABLE Funcionarios (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    empregado_id UUID NOT NULL REFERENCES Pessoa_Fisica(id) ON DELETE CASCADE, -- Agora refere-se diretamente a Pessoas
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES Pessoa_Fisica(id) ON DELETE CASCADE, -- Agora refere-se diretamente a Pessoas
+--  empregado_id UUID NOT NULL REFERENCES Pessoa_Fisica(id) ON DELETE CASCADE, -- Agora refere-se diretamente a Pessoas
     empregador_id UUID NOT NULL REFERENCES Pessoas(id) ON DELETE CASCADE, -- Pode ser tanto PF quanto PJ
     cargo VARCHAR(100) NOT NULL -- Ex: Gerente, Operador, Supervisor
 );
 
 -- Tabela para cadastro de motoristas
 CREATE TABLE Motoristas (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    funcionarios_id UUID UNIQUE NOT NULL REFERENCES funcionarios(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES funcionarios(id) ON DELETE CASCADE,
+--  funcionarios_id UUID UNIQUE NOT NULL REFERENCES funcionarios(id) ON DELETE CASCADE,
     tipo_veiculo VARCHAR(50),
     placa_veiculo VARCHAR(20)
 );
@@ -235,7 +233,7 @@ CREATE TABLE Audit_Logs (
 -- INDEX
 
 CREATE INDEX idx_pedidos_pessoa ON Pedidos(pessoa_id);
-CREATE INDEX idx_motoristas_funcionarios ON Motoristas(funcionarios_id);
+CREATE INDEX idx_motoristas_funcionarios ON Motoristas(id);
 CREATE INDEX idx_itens_pedido ON Itens_Pedido(pedido_id);
 CREATE INDEX idx_itens_produto ON Itens_Pedido(produto_id);
 CREATE INDEX idx_Pessoas_email ON Pessoas(email);
@@ -254,7 +252,8 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Verifica se o funcionário existe antes de inserir como motorista
     IF NOT EXISTS (
-        SELECT 1 FROM Funcionarios WHERE id = NEW.funcionarios_id
+        -- SELECT 1 FROM Funcionarios WHERE id = NEW.funcionarios_id
+        SELECT 1 FROM Funcionarios WHERE id = NEW.id
     ) THEN
         RAISE EXCEPTION 'O motorista precisa ser um funcionário válido.';
     END IF;
