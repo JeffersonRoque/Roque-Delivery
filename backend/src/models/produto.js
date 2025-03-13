@@ -1,6 +1,6 @@
 const { Model, DataTypes } = require('sequelize');
 
-class Pessoa extends Model {
+class Produto extends Model {
   static init(sequelize) {
     super.init(
       {
@@ -9,37 +9,34 @@ class Pessoa extends Model {
           defaultValue: sequelize.literal('uuid_generate_v4()'),
           primaryKey: true
         },
-        tipo_pessoa: {
-          type: DataTypes.ENUM('fisica', 'juridica'),
-          allowNull: false
-        },
         nome: {
           type: DataTypes.STRING,
           allowNull: false
         },
-        email: {
-          type: DataTypes.STRING,
-          allowNull: false,
-          unique: true
-        },
-        senha_hash: {
+        descricao: {
           type: DataTypes.TEXT,
+        },
+        preco: {
+          type: DataTypes.DECIMAL(10, 2),
           allowNull: false
         },
-        telefone: {
-          type: DataTypes.STRING,
+        estoque: {
+          type: DataTypes.INTEGER,
           allowNull: false,
-          unique: true
+          validate: {min: 0} // Garante que o estoque seja >= 0
         },
-        endereco: {
-          type: DataTypes.TEXT,
-          allowNull: false
+        categorias: {
+          type: DataTypes.STRING
+        },
+        eh_alcoolico: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
         }
       },
       {
         sequelize,
-        modelName: 'Pessoa',
-        tableName: 'pessoas',
+        modelName: 'Produto',
+        tableName: 'produtos',
         timestamps: true,
         createdAt: 'criado_em',
         updatedAt: 'modificado_em'
@@ -52,4 +49,4 @@ class Pessoa extends Model {
   }
 }
 
-module.exports = Pessoa;
+module.exports = Produto;

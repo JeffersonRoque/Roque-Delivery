@@ -18,19 +18,19 @@ CREATE TABLE Pessoas (
 CREATE TABLE Pessoa_Fisica (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES Pessoas(id) ON DELETE CASCADE,
 --  pessoa_id UUID UNIQUE NOT NULL REFERENCES Pessoas(id) ON DELETE CASCADE,
-    cpf_hash TEXT UNIQUE,
-    data_nascimento DATE
+    cpf_hash TEXT UNIQUE NOT NULL,
+    data_nascimento DATE NOT NULL
 );
 
 -- Tabela para cadastro de empresas
 CREATE TABLE Pessoa_Juridica (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES Pessoas(id) ON DELETE CASCADE,
 --  pessoa_id UUID UNIQUE NOT NULL REFERENCES Pessoas(id) ON DELETE CASCADE,
-    cnpj VARCHAR(18) UNIQUE,
+    cnpj VARCHAR(18) UNIQUE NOT NULL,
     razao_social VARCHAR(255) NOT NULL,
     nome_fantasia VARCHAR(255),
     inscricao_estadual VARCHAR(50),
-	eh_empresa BOOLEAN DEFAULT TRUE
+--	eh_empresa BOOLEAN DEFAULT TRUE
 );
 
 -- Tabela para cadastro de funcionários
@@ -54,7 +54,7 @@ CREATE TABLE Produtos (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     nome VARCHAR(100) UNIQUE NOT NULL,
     descricao TEXT,
-    preco DECIMAL(10,2) NOT NULL,
+    preco DECIMAL(10,2) NOT NULL ,
     estoque INT NOT NULL CHECK (estoque >= 0),
     categorias VARCHAR(50),
 	eh_alcoolico BOOLEAN DEFAULT FALSE,
@@ -68,6 +68,7 @@ CREATE TABLE Subprodutos (
     nome VARCHAR(100) UNIQUE NOT NULL,
     descricao TEXT,
     preco DECIMAL(10,2) NOT NULL CHECK (preco >= 0),
+    estoque INT NOT NULL CHECK (estoque >= 0),
     criado_em TIMESTAMP DEFAULT NOW(),
     modificado_em TIMESTAMP DEFAULT NOW()
 );
@@ -103,7 +104,7 @@ CREATE TABLE Itens_Pedido_Subprodutos (
     CONSTRAINT fk_subproduto FOREIGN KEY (subproduto_id) REFERENCES Subprodutos(id) ON DELETE CASCADE
 );
 
--- Tabela de entrga dos produtos
+-- Tabela de entrega dos produtos
 CREATE TABLE Entregas (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     pedido_id UUID REFERENCES Pedidos(id),

@@ -1,40 +1,41 @@
-module.exports = (sequelize, DataTypes) => {
-    const PessoaJuridica = sequelize.define('PessoaJuridica', {
+const { Model, DataTypes } = require('sequelize');
+
+class PessoaJuridica extends Model {
+  static init(sequelize) {
+    super.init(
+      {
         id: {
-            type: DataTypes.UUID,
-            primaryKey: true,
-            references: {
-                model: 'pessoas',
-                key: 'id'
-            }
+          type: DataTypes.UUID,
+          primaryKey: true,
+          references: {model: 'pessoas', key: 'id'}
         },
         cnpj: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            unique: true
+          type: DataTypes.STRING,
+          allowNull: false,
+          unique: true
         },
         razao_social: {
-            type: DataTypes.STRING,
-            allowNull: false
+          type: DataTypes.STRING,
+          allowNull: false
         },
         nome_fantasia: {
-            type: DataTypes.STRING
+          type: DataTypes.STRING
         },
         inscricao_estadual: {
-            type: DataTypes.STRING
+          type: DataTypes.STRING
         },
-        eh_empresa: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: true
-        }
-    }, {
-        timestamps: true,
+      },
+      {
+        sequelize,
+        modelName: 'PessoaJuridica',
         tableName: 'pessoa_juridica'
-    });
-    
-    PessoaJuridica.associate = (models) => {
-        PessoaJuridica.belongsTo(models.Pessoa, { foreignKey: 'id', as: 'pessoa' });
-    };
-    
-    return PessoaJuridica;
-};
+      }
+    );
+  }
+
+  static associate(models) {
+    this.belongsTo(models.Pessoa, { foreignKey: 'id', as: 'pessoa' });
+  }
+}
+
+module.exports = PessoaJuridica;

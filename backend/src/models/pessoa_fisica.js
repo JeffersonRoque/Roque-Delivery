@@ -1,30 +1,35 @@
-module.exports = (sequelize, DataTypes) => {
-    const PessoaFisica = sequelize.define('PessoaFisica', {
+const { Model, DataTypes } = require('sequelize');
+
+class PessoaFisica extends Model {
+  static init(sequelize) {
+    super.init(
+      {
         id: {
-            type: DataTypes.UUID,
-            primaryKey: true,
-            references: {
-                model: 'pessoas',
-                key: 'id'
-            }
+          type: DataTypes.UUID,
+          primaryKey: true,
+          references: {model: 'pessoas', key: 'id'}
         },
         cpf: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            unique: true
+          type: DataTypes.STRING,
+          allowNull: false,
+          unique: true
         },
         data_nascimento: {
-            type: DataTypes.DATEONLY,
-            allowNull: false
+          type: DataTypes.DATEONLY,
+          allowNull: false
         }
-    }, {
-        timestamps: true,
+      },
+      {
+        sequelize,
+        modelName: 'PessoaFisica',
         tableName: 'pessoa_fisica'
-    });
-    
-    PessoaFisica.associate = (models) => {
-        PessoaFisica.belongsTo(models.Pessoa, { foreignKey: 'id', as: 'pessoa' });
-    };
-    
-    return PessoaFisica;
-};
+      }
+    );
+  }
+
+  static associate(models) {
+    this.belongsTo(models.Pessoa, { foreignKey: 'id', as: 'pessoa' });
+  }
+}
+
+module.exports = PessoaFisica;
