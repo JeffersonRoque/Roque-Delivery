@@ -6,25 +6,19 @@ class NotaFiscal extends Model {
       {
         id: {
           type: DataTypes.UUID,
-          defaultValue: sequelize.literal('uuid_generate_v4()'),
+          defaultValue: DataTypes.UUIDV4, // Melhor prática para UUID
           primaryKey: true,
         },
         pedido_id: {
           type: DataTypes.UUID,
           allowNull: false,
           unique: true,
-          references: {
-            model: 'Pedidos',
-            key: 'id',
-          },
+          references: { model: 'pedido', key: 'id' }
         },
         emissor_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: {
-            model: 'Pessoas',
-            key: 'id',
-          },
+          references: { model: 'pessoa', key: 'id' }
         },
         numero_nota: {
           type: DataTypes.STRING(50),
@@ -35,13 +29,13 @@ class NotaFiscal extends Model {
           type: DataTypes.ENUM('ativa', 'cancelada'),
           allowNull: false,
           defaultValue: 'ativa',
-        }
+        },
       },
       {
         sequelize,
         modelName: 'NotaFiscal',
         tableName: 'notas_fiscais',
-        timestamps: true,
+        timestamps: true, 
         createdAt: 'criado_em',
         updatedAt: 'modificado_em'
       }

@@ -7,7 +7,7 @@ class PessoaJuridica extends Model {
         id: {
           type: DataTypes.UUID,
           primaryKey: true,
-          references: {model: 'pessoas', key: 'id'}
+          references: {model: 'pessoa', key: 'id'}
         },
         cnpj: {
           type: DataTypes.STRING,

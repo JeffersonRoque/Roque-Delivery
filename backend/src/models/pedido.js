@@ -6,12 +6,14 @@ class Pedido extends Model {
       {
         id: {
           type: DataTypes.UUID,
-          defaultValue: sequelize.literal('uuid_generate_v4()'),
+          defaultValue: DataTypes.UUIDV4,
           primaryKey: true
         },
         pessoa_id: {
           type: DataTypes.UUID,
           allowNull: true, // Permitir valores NULL
+          references: { model: 'pessoa', key: 'id' },
+          onDelete: 'SET NULL' 
         },
         preco_total: {
           type: DataTypes.DECIMAL(10, 2),
@@ -21,14 +23,6 @@ class Pedido extends Model {
           type: DataTypes.ENUM('pendente', 'preparando', 'em_entrega', 'concluido', 'cancelado'),
           allowNull: false,
           defaultValue: 'pendente'
-        },
-        criado_em: {
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW
-        },
-        modificado_em: {
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW
         }
       },
       {

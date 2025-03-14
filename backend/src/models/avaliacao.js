@@ -6,8 +6,18 @@ class Avaliacao extends Model {
       {
         id: {
           type: DataTypes.UUID,
-          defaultValue: sequelize.literal('uuid_generate_v4()'),
+          defaultValue: DataTypes.UUIDV4,
           primaryKey: true
+        },
+        pessoa_id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: { model: 'pessoa', key: 'id' }
+        },
+        motorista_id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: { model: 'motorista', key: 'id' }
         },
         nota: {
           type: DataTypes.INTEGER,

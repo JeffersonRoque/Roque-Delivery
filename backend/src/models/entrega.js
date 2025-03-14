@@ -6,23 +6,22 @@ class Entrega extends Model {
       {
         id: {
           type: DataTypes.UUID,
-          defaultValue: sequelize.literal('uuid_generate_v4()'),
+          defaultValue: DataTypes.UUIDV4,
           primaryKey: true
         },
         pedido_id: {
           type: DataTypes.UUID,
-          allowNull: false
+          allowNull: false,
+          references: { model: 'pedido', key: 'id' }
         },
         motorista_id: {
           type: DataTypes.UUID,
-          allowNull: false
+          allowNull: false,
+          references: { model: 'motorista', key: 'id' }
         },
         status: {
           type: DataTypes.ENUM('pendente', 'em_transito', 'entregue', 'falhou'),
           allowNull: false
-        },
-        entregue_em: {
-          type: DataTypes.DATE
         }
       },
       {

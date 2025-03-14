@@ -9,6 +9,18 @@ class CupomPessoa extends Model {
           defaultValue: DataTypes.UUIDV4,
           primaryKey: true
         },
+        pessoa_id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: { model: 'pessoa', key: 'id' },
+          onDelete: 'CASCADE' 
+        },
+        cupom_id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: { model: 'cupom', key: 'id' },
+          onDelete: 'CASCADE' 
+        },
         usado: {
           type: DataTypes.BOOLEAN,
           defaultValue: false
@@ -21,7 +33,9 @@ class CupomPessoa extends Model {
       {
         sequelize,
         modelName: 'CupomPessoa',
-        tableName: 'cupons_pessoas'
+        tableName: 'cupons_pessoas',
+        timestamps: true,
+        createdAt: 'criado_em'
       }
     );
   }

@@ -7,7 +7,7 @@ class Funcionario extends Model {
         id: {
           type: DataTypes.UUID,
           primaryKey: true,
-          references: { model: 'pessoa_fisica', key: 'id' }
+          references: { model: 'pessoaFisica', key: 'id' }
         },
         cargo: {
           type: DataTypes.STRING,
@@ -23,7 +23,6 @@ class Funcionario extends Model {
   }
 
   static associate(models) {
-    this.belongsTo(models.PessoaFisica, { foreignKey: 'id', as: 'pessoaFisica' });
     this.belongsTo(models.Pessoa, { foreignKey: 'empregador_id', as: 'empregador' });
   }
 }

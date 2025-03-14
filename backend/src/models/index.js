@@ -26,10 +26,12 @@ const CupomPessoa = require('./cupomPessoa.js');
 const Entrega = require('./entrega.js');
 const Funcionario = require('./funcionario.js');
 const ItemPedido = require('./itemPedido.js');
-
-
-
-
+const ItemPedidoSubproduto = require('./itemPedidoSubproduto.js');
+const Localizacao = require('./localizacao.js');
+const Motorista = require('./motorista.js');
+const NotaFiscal = require('./notaFiscal.js');
+const Pagamento = require('./pagamento.js');
+const Pedido = require('./pedido.js');
 const Pessoa = require('./pessoa.js');
 const PessoaFisica = require('./pessoaFisica.js');
 const PessoaJuridica = require('./pessoaJuridica.js');
@@ -38,11 +40,45 @@ const Relatorio = require('./relatorio.js');
 const Subproduto = require('./subproduto.js');
 
 // 🔹 Inicializando os Models ANTES de associar
+AudiLog.init(sequelize);
+Avaliacao.init(sequelize);
+Cashback.init(sequelize);
+CashbackProduto.init(sequelize);
+CashbackTransacao.init(sequelize);
+Cupom.init(sequelize);
+CupomPessoa.init(sequelize);
+Entrega.init(sequelize);
+Funcionario.init(sequelize);
+ItemPedido.init(sequelize);
+ItemPedidoSubproduto.init(sequelize);
+Localizacao.init(sequelize);
+Motorista.init(sequelize);
+NotaFiscal.init(sequelize);
+Pagamento.init(sequelize);
+Pedido.init(sequelize);
 Pessoa.init(sequelize);
 PessoaFisica.init(sequelize);
 PessoaJuridica.init(sequelize);
+Produto.init(sequelize);
+Relatorio.init(sequelize);
+Subproduto.init(sequelize);
 
 // 🔹 Associando os Models
+AudiLog.associate?.(sequelize.models);
+Avaliacao.associate?.(sequelize.models);
+Cashback.associate?.(sequelize.models);
+CashbackProduto.associate?.(sequelize.models);
+CashbackTransacao.associate?.(sequelize.models);
+CupomPessoa.associate?.(sequelize.models);
+Entrega.associate?.(sequelize.models);
+Funcionario.associate?.(sequelize.models);
+ItemPedido.associate?.(sequelize.models);
+ItemPedidoSubproduto.associate?.(sequelize.models);
+Localizacao.associate?.(sequelize.models);
+Motorista.associate?.(sequelize.models);
+NotaFiscal.associate?.(sequelize.models);
+Pagamento.associate?.(sequelize.models);
+Pedido.associate?.(sequelize.models);
 PessoaFisica.associate?.(sequelize.models);
 PessoaJuridica.associate?.(sequelize.models);
 

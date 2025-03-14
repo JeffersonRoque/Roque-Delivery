@@ -7,7 +7,7 @@ class Motorista extends Model {
         id: {
           type: DataTypes.UUID,
           primaryKey: true,
-          references: { model: 'funcionarios', key: 'id' }
+          references: { model: 'funcionario', key: 'id' }
         },
         tipo_veiculo: {
           type: DataTypes.STRING,

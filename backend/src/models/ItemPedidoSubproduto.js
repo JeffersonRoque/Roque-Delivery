@@ -6,16 +6,20 @@ class ItemPedidoSubproduto extends Model {
       {
         id: {
           type: DataTypes.UUID,
-          defaultValue: sequelize.literal('gen_random_uuid()'),
+          defaultValue: DataTypes.UUIDV4,
           primaryKey: true
         },
         item_pedido_id: {
           type: DataTypes.UUID,
-          allowNull: false
+          allowNull: false,
+          references: { model: 'itemPedido', key: 'id' },
+          onDelete: 'CASCADE'
         },
         subproduto_id: {
           type: DataTypes.UUID,
-          allowNull: false
+          allowNull: false,
+          references: { model: 'subproduto', key: 'id' },
+          onDelete: 'CASCADE'
         },
         quantidade: {
           type: DataTypes.INTEGER,
@@ -28,8 +32,7 @@ class ItemPedidoSubproduto extends Model {
       {
         sequelize,
         modelName: 'ItemPedidoSubproduto',
-        tableName: 'itens_pedido_subprodutos',
-        timestamps: false
+        tableName: 'itens_pedido_subprodutos'
       }
     );
   }

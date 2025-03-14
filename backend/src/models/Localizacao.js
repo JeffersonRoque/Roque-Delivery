@@ -6,16 +6,18 @@ class Localizacao extends Model {
       {
         id: {
           type: DataTypes.UUID,
-          defaultValue: sequelize.literal('uuid_generate_v4()'),
+          defaultValue: DataTypes.UUIDV4,
           primaryKey: true
         },
         pessoa_id: {
           type: DataTypes.UUID,
-          allowNull: true // Pode ser nulo se for localização de um motorista
+          allowNull: true,
+          references: { model: 'pessoa', key: 'id' } 
         },
         motorista_id: {
           type: DataTypes.UUID,
-          allowNull: true // Pode ser nulo se for localização de uma pessoa
+          allowNull: true,
+          references: { model: 'motorista', key: 'id' }
         },
         latitude: {
           type: DataTypes.DECIMAL(10, 6),
@@ -30,9 +32,7 @@ class Localizacao extends Model {
         sequelize,
         modelName: 'Localizacao',
         tableName: 'localizacoes',
-        timestamps: true,
-        createdAt: 'criado_em',
-        updatedAt: 'modificado_em'
+        timestamps: true
       }
     );
   }

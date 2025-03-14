@@ -6,12 +6,13 @@ class Pagamento extends Model {
       {
         id: {
           type: DataTypes.UUID,
-          defaultValue: sequelize.literal('uuid_generate_v4()'),
+          defaultValue: DataTypes.UUIDV4,
           primaryKey: true
         },
         pedido_id: {
           type: DataTypes.UUID,
-          allowNull: false
+          allowNull: false,
+          references: { model: 'pedido', key: 'id' }
         },
         metodo_pagamento: {
           type: DataTypes.ENUM('cartao_credito', 'cartao_debito', 'pix', 'dinheiro'),

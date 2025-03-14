@@ -7,7 +7,7 @@ class PessoaFisica extends Model {
         id: {
           type: DataTypes.UUID,
           primaryKey: true,
-          references: {model: 'pessoas', key: 'id'}
+          references: {model: 'pessoa', key: 'id'}
         },
         cpf: {
           type: DataTypes.STRING,

@@ -6,7 +6,7 @@ class AuditLog extends Model {
       {
         id: {
           type: DataTypes.UUID,
-          defaultValue: sequelize.literal('uuid_generate_v4()'),
+          defaultValue: DataTypes.UUIDV4,
           primaryKey: true
         },
         tabela_alvo: {
@@ -32,6 +32,11 @@ class AuditLog extends Model {
         valor_novo: {
           type: DataTypes.TEXT,
           allowNull: true
+        },
+        alterado_por: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: { model: 'funcionario', key: 'id' }
         }
       },
       {
@@ -39,14 +44,14 @@ class AuditLog extends Model {
         modelName: 'AuditLog',
         tableName: 'audit_logs',
         timestamps: true,
-        createdAt: 'alterado_em',
-        updatedAt: false
+        createdAt: 'criado_em',
+        updatedAt: 'modificado_em'
       }
     );
   }
 
   static associate(models) {
-    this.belongsTo(models.Pessoa, { foreignKey: 'alterado_por', as: 'responsavel' });
+    this.belongsTo(models.Funcionario, { foreignKey: 'alterado_por', as: 'responsavel' });
   }
 }
 

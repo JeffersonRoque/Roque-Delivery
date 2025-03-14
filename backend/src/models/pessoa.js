@@ -6,7 +6,7 @@ class Pessoa extends Model {
       {
         id: {
           type: DataTypes.UUID,
-          defaultValue: sequelize.literal('uuid_generate_v4()'),
+          defaultValue: DataTypes.UUIDV4,
           primaryKey: true
         },
         tipo_pessoa: {
@@ -45,10 +45,6 @@ class Pessoa extends Model {
         updatedAt: 'modificado_em'
       }
     );
-  }
-
-  static associate(models) {
-    // Defina os relacionamentos, se necessário
   }
 }
 

@@ -9,6 +9,12 @@ class CashbackProduto extends Model {
           defaultValue: DataTypes.UUIDV4,
           primaryKey: true
         },
+        produto_id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: { model: 'produto', key: 'id' },
+          onDelete: 'CASCADE' 
+        },
         percentual_cashback: {
           type: DataTypes.DECIMAL(5, 2),
           allowNull: true,
@@ -26,21 +32,15 @@ class CashbackProduto extends Model {
         ativo: {
           type: DataTypes.BOOLEAN,
           defaultValue: true
-        },
-        atualizado_em: {
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW
-        },
-        modificado_em: {
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW
         }
       },
       {
         sequelize,
         modelName: 'CashbackProduto',
         tableName: 'cashback_produtos',
-        timestamps: false
+        timestamps: true,
+        createdAt: 'criado_em',
+        updatedAt: 'atualizado_em'
       }
     );
   }

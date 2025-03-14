@@ -9,27 +9,27 @@ class Cashback extends Model {
           defaultValue: DataTypes.UUIDV4,
           primaryKey: true
         },
+        pessoa_id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: { model: 'pessoa', key: 'id' },
+          onDelete: 'CASCADE' 
+        },
         valor_acumulado: {
           type: DataTypes.DECIMAL(10, 2),
           defaultValue: 0,
           validate: {
             min: 0
           }
-        },
-        atualizado_em: {
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW
-        },
-        modificado_em: {
-          type: DataTypes.DATE,
-          defaultValue: DataTypes.NOW
         }
       },
       {
         sequelize,
         modelName: 'Cashback',
         tableName: 'cashback',
-        timestamps: false
+        timestamps: true,
+        createdAt: 'criado_em',
+        updatedAt: 'atualizado_em'
       }
     );
   }

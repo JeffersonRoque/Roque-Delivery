@@ -110,7 +110,8 @@ CREATE TABLE Entregas (
     pedido_id UUID REFERENCES Pedidos(id),
     motorista_id UUID REFERENCES Motoristas(id),
     status VARCHAR(50) CHECK (status IN ('pendente', 'em_transito', 'entregue', 'falhou')),
-    entregue_em TIMESTAMP
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tabela de localização dos produtos | motoristas
@@ -168,6 +169,7 @@ CREATE TABLE Cupons_Pessoas (
     pessoa_id UUID REFERENCES Pessoas(id) ON DELETE CASCADE,
     cupom_id UUID REFERENCES Cupons(id) ON DELETE CASCADE,
     usado BOOLEAN DEFAULT FALSE,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     usado_em TIMESTAMP
 );
 
@@ -176,8 +178,8 @@ CREATE TABLE Cashback (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     pessoa_id UUID UNIQUE REFERENCES Pessoas(id) ON DELETE CASCADE,
     valor_acumulado DECIMAL(10,2) DEFAULT 0 CHECK (valor_acumulado >= 0),
-    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	modificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE Cashback_Transacoes (
@@ -196,8 +198,8 @@ CREATE TABLE Cashback_Produtos (
     percentual_cashback DECIMAL(5,2) CHECK (percentual_cashback >= 0),
     valor_fixo_cashback DECIMAL(10,2) CHECK (valor_fixo_cashback >= 0),
     ativo BOOLEAN DEFAULT TRUE,
-	atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	modificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tabela das Avalições de clientes
@@ -228,7 +230,8 @@ CREATE TABLE Audit_Logs (
     coluna VARCHAR(50) NOT NULL,
     valor_antigo TEXT,
     valor_novo TEXT,
-    alterado_por UUID REFERENCES Pessoas(id),
+    alterado_por UUID REFERENCES Funcionarios(id),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     alterado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 -- INDEX
