@@ -16,9 +16,26 @@ const sequelize = config.use_env_variable
   : new Sequelize(config.database, config.username, config.password, config);
 
 // 🔹 Importando os Models corretamente
-const Pessoa = require('./pessoa');
-const PessoaFisica = require('./pessoa_fisica');
-const PessoaJuridica = require('./pessoa_juridica');
+const AudiLog = require ('./auditLog.js');
+const Avaliacao = require('./avaliacao.js');
+const Cashback = require('./cashback.js');
+const CashbackProduto = require ('./cashbackProduto.js');
+const CashbackTransacao = require('./cashbackTransacao.js');
+const Cupom = require('./cupom.js');
+const CupomPessoa = require('./cupomPessoa.js');
+const Entrega = require('./entrega.js');
+const Funcionario = require('./funcionario.js');
+const ItemPedido = require('./itemPedido.js');
+
+
+
+
+const Pessoa = require('./pessoa.js');
+const PessoaFisica = require('./pessoaFisica.js');
+const PessoaJuridica = require('./pessoaJuridica.js');
+const Produto = require('./produto.js');
+const Relatorio = require('./relatorio.js');
+const Subproduto = require('./subproduto.js');
 
 // 🔹 Inicializando os Models ANTES de associar
 Pessoa.init(sequelize);
