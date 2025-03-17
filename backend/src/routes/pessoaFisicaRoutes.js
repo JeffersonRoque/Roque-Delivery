@@ -1,11 +1,12 @@
 const express = require('express');
-const router = express.Router();
 const pessoaFisicaController = require('../controllers/pessoaFisicaController');
+
+const router = express.Router();
 
 // 🔹 Criar uma nova pessoa física
 router.post('/', pessoaFisicaController.create);
 
-// 🔹 Buscar todas as pessoas físicas
+// 🔹 Buscar pessoas físicas com filtros dinâmicos
 router.get('/', pessoaFisicaController.getAll);
 
 // 🔹 Buscar uma pessoa física pelo ID

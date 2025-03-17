@@ -12,7 +12,6 @@ exports.createCupom = async (req, res) => {
             return res.status(400).json({ error: 'Código, desconto e tipo de desconto são obrigatórios' });
         }
 
-        // Verifica se já existe um cupom com o mesmo código
         const cupomExistente = await Cupom.findOne({ where: { codigo } });
 
         if (cupomExistente) {
@@ -37,10 +36,20 @@ exports.createCupom = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todos os Cupons
+// 🔹 Buscar Cupons com Filtros Dinâmicos
 exports.getAllCupons = async (req, res) => {
     try {
-        const cupons = await Cupom.findAll();
+        const { codigo, ativo, tipo_desconto, validade_min, validade_max } = req.query;
+
+        let where = {};
+
+        if (codigo) where.codigo = { [Op.iLike]: `%${codigo}%` };
+        if (ativo !== undefined) where.ativo = ativo === 'true';
+        if (tipo_desconto) where.tipo_desconto = tipo_desconto;
+        if (validade_min) where.validade = { [Op.gte]: new Date(validade_min) };
+        if (validade_max) where.validade = { ...where.validade, [Op.lte]: new Date(validade_max) };
+
+        const cupons = await Cupom.findAll({ where });
         res.json(cupons);
     } catch (error) {
         console.error("Erro ao buscar cupons:", error);
@@ -70,44 +79,6 @@ exports.getCupomById = async (req, res) => {
     }
 };
 
-// 🔹 Buscar um Cupom por Código
-exports.getCupomByCodigo = async (req, res) => {
-    try {
-        const { codigo } = req.params;
-
-        const cupom = await Cupom.findOne({ where: { codigo } });
-
-        if (!cupom) {
-            return res.status(404).json({ error: 'Cupom não encontrado' });
-        }
-
-        res.json(cupom);
-    } catch (error) {
-        console.error("Erro ao buscar cupom por código:", error);
-        res.status(500).json({ error: 'Erro ao buscar cupom', details: error.message });
-    }
-};
-
-// 🔹 Buscar Cupons Ativos
-exports.getCuponsAtivos = async (req, res) => {
-    try {
-        const cuponsAtivos = await Cupom.findAll({
-            where: {
-                ativo: true,
-                [Op.or]: [
-                    { validade: { [Op.is]: null } },  // Cupons sem validade
-                    { validade: { [Op.gte]: new Date() } }  // Cupons ainda válidos
-                ]
-            }
-        });
-
-        res.json(cuponsAtivos);
-    } catch (error) {
-        console.error("Erro ao buscar cupons ativos:", error);
-        res.status(500).json({ error: 'Erro ao buscar cupons ativos', details: error.message });
-    }
-};
-
 // 🔹 Atualizar um Cupom
 exports.updateCupom = async (req, res) => {
     try {
@@ -124,12 +95,11 @@ exports.updateCupom = async (req, res) => {
             return res.status(404).json({ error: 'Cupom não encontrado' });
         }
 
-        // Verifica se o novo código já pertence a outro cupom
         if (codigo) {
             const existeOutroCupom = await Cupom.findOne({
                 where: {
                     codigo,
-                    id: { [Op.ne]: id } // Garante que não seja o próprio cupom
+                    id: { [Op.ne]: id }
                 }
             });
 

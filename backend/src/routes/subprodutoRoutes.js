@@ -1,11 +1,12 @@
 const express = require('express');
-const router = express.Router();
 const subprodutoController = require('../controllers/subprodutoController');
+
+const router = express.Router();
 
 // 🔹 Criar um novo subproduto
 router.post('/', subprodutoController.createSubproduto);
 
-// 🔹 Buscar todos os subprodutos
+// 🔹 Buscar subprodutos com filtros dinâmicos
 router.get('/', subprodutoController.getAllSubprodutos);
 
 // 🔹 Buscar um subproduto por ID

@@ -1,10 +1,10 @@
-const { Pessoa } = require('../models'); // Importando corretamente do index.js
-const { Op } = require('sequelize'); // Operadores para consultas
+const { Pessoa } = require('../models');
+const { Op } = require('sequelize'); // Operadores para consultas dinâmicas
 
 // 🔹 Criar uma nova pessoa
 exports.createPessoa = async (req, res) => {
     try {
-        console.log("Recebendo requisição para criar pessoa:", req.body); // Debug
+        console.log("Recebendo requisição para criar pessoa:", req.body);
 
         const { nome, email, senha_hash, tipo_pessoa, telefone, endereco } = req.body;
 
@@ -12,7 +12,6 @@ exports.createPessoa = async (req, res) => {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
         }
 
-        // Verificar se já existe uma pessoa com o mesmo e-mail ou telefone
         const pessoaExistente = await Pessoa.findOne({
             where: {
                 [Op.or]: [{ email }, { telefone }]
@@ -24,7 +23,6 @@ exports.createPessoa = async (req, res) => {
         }
 
         const novaPessoa = await Pessoa.create({ nome, email, senha_hash, tipo_pessoa, telefone, endereco });
-
         return res.status(201).json(novaPessoa);
     } catch (error) {
         console.error("Erro ao criar pessoa:", error);
@@ -32,10 +30,24 @@ exports.createPessoa = async (req, res) => {
     }
 };
 
-// 🔹 Busca todas as pessoas
-exports.getAllPessoas = async (req, res) => {
+// 🔹 Buscar Pessoas com Filtros Dinâmicos
+exports.getPessoas = async (req, res) => {
     try {
-        const pessoas = await Pessoa.findAll();
+        const { nome, email, tipo_pessoa, telefone, endereco, limite, ordenacao } = req.query;
+
+        let where = {};
+        if (nome) where.nome = { [Op.iLike]: `%${nome}%` };
+        if (email) where.email = { [Op.iLike]: `%${email}%` };
+        if (tipo_pessoa) where.tipo_pessoa = tipo_pessoa;
+        if (telefone) where.telefone = telefone;
+        if (endereco) where.endereco = { [Op.iLike]: `%${endereco}%` };
+
+        const pessoas = await Pessoa.findAll({
+            where,
+            order: [['createdAt', ordenacao === 'asc' ? 'ASC' : 'DESC']],
+            limit: limite ? parseInt(limite) : null
+        });
+
         res.json(pessoas);
     } catch (error) {
         console.error("Erro ao buscar pessoas:", error);
@@ -48,7 +60,6 @@ exports.getPessoaById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -70,7 +81,6 @@ exports.updatePessoa = async (req, res) => {
         const { id } = req.params;
         const { email, telefone } = req.body;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -80,12 +90,11 @@ exports.updatePessoa = async (req, res) => {
             return res.status(404).json({ error: 'Pessoa não encontrada' });
         }
 
-        // Verifica se o novo email ou telefone já pertence a outra pessoa
         if (email || telefone) {
             const existeOutraPessoa = await Pessoa.findOne({
                 where: {
                     [Op.or]: [{ email }, { telefone }],
-                    id: { [Op.ne]: id } // Garante que não seja a própria pessoa
+                    id: { [Op.ne]: id }
                 }
             });
 
@@ -107,7 +116,6 @@ exports.deletePessoa = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -124,5 +132,3 @@ exports.deletePessoa = async (req, res) => {
         res.status(500).json({ error: 'Erro ao deletar pessoa', details: error.message });
     }
 };
-
-console.log("Modelo Pessoa carregado:", Pessoa);

@@ -1,10 +1,10 @@
-const { Funcionario, PessoaFisica, Pessoa } = require('../models'); // Importando corretamente do index.js
-const { Op } = require('sequelize'); // Operadores para consultas
+const { Funcionario, PessoaFisica, Pessoa } = require('../models');
+const { Op } = require('sequelize'); // Operadores para consultas dinâmicas
 
 // 🔹 Criar um novo funcionário
 exports.createFuncionario = async (req, res) => {
     try {
-        console.log("Recebendo requisição para criar funcionário:", req.body); // Debug
+        console.log("Recebendo requisição para criar funcionário:", req.body);
 
         const { pessoa_id, empregador_id, cargo } = req.body;
 
@@ -33,10 +33,27 @@ exports.createFuncionario = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todos os funcionários
-exports.getAllFuncionarios = async (req, res) => {
+// 🔹 Buscar Funcionários com Filtros Dinâmicos
+exports.getFuncionarios = async (req, res) => {
     try {
-        const funcionarios = await Funcionario.findAll({ include: { model: PessoaFisica, as: 'pessoaFisica' } });
+        const { cargo, empregador_id, nome, data_inicio, data_fim } = req.query;
+
+        let where = {};
+        if (cargo) where.cargo = { [Op.iLike]: `%${cargo}%` };
+        if (empregador_id) where.empregador_id = empregador_id;
+        if (data_inicio && data_fim) {
+            where.criado_em = { [Op.between]: [new Date(data_inicio), new Date(data_fim)] };
+        }
+
+        const funcionarios = await Funcionario.findAll({
+            where,
+            include: {
+                model: PessoaFisica,
+                as: 'pessoaFisica',
+                where: nome ? { nome: { [Op.iLike]: `%${nome}%` } } : undefined
+            }
+        });
+
         res.json(funcionarios);
     } catch (error) {
         console.error("Erro ao buscar funcionários:", error);
@@ -53,10 +70,14 @@ exports.getFuncionarioById = async (req, res) => {
             return res.status(400).json({ error: 'ID inválido' });
         }
 
-        const funcionario = await Funcionario.findByPk(id, { include: { model: PessoaFisica, as: 'pessoaFisica' } });
+        const funcionario = await Funcionario.findByPk(id, {
+            include: { model: PessoaFisica, as: 'pessoaFisica' }
+        });
+
         if (!funcionario) {
             return res.status(404).json({ error: 'Funcionário não encontrado' });
         }
+
         res.json(funcionario);
     } catch (error) {
         console.error("Erro ao buscar funcionário:", error);
@@ -108,5 +129,3 @@ exports.deleteFuncionario = async (req, res) => {
         res.status(500).json({ error: 'Erro ao deletar funcionário', details: error.message });
     }
 };
-
-console.log("Modelo Funcionário carregado:", Funcionario);

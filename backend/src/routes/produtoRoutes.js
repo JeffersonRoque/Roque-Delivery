@@ -1,11 +1,12 @@
 const express = require('express');
-const router = express.Router();
 const produtoController = require('../controllers/produtoController');
+
+const router = express.Router();
 
 // 🔹 Criar um novo produto
 router.post('/', produtoController.createProduto);
 
-// 🔹 Buscar todos os produtos
+// 🔹 Buscar produtos com filtros dinâmicos
 router.get('/', produtoController.getAllProdutos);
 
 // 🔹 Buscar um produto por ID

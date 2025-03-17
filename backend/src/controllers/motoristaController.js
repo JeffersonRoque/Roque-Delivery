@@ -1,10 +1,10 @@
-const { Motorista, Funcionario } = require('../models'); // Importando corretamente do index.js
-const { Op } = require('sequelize'); // Operadores para consultas
+const { Motorista, Funcionario } = require('../models');
+const { Op } = require('sequelize'); // Operadores para filtros dinâmicos
 
 // 🔹 Criar um novo motorista
 exports.createMotorista = async (req, res) => {
     try {
-        console.log("Recebendo requisição para criar motorista:", req.body); // Debug
+        console.log("Recebendo requisição para criar motorista:", req.body);
 
         const { id, tipo_veiculo, placa_veiculo } = req.body;
 
@@ -26,10 +26,20 @@ exports.createMotorista = async (req, res) => {
     }
 };
 
-// 🔹 Busca todos os motoristas
-exports.getAllMotoristas = async (req, res) => {
+// 🔹 Buscar Motoristas com Filtros Dinâmicos
+exports.getMotoristas = async (req, res) => {
     try {
-        const motoristas = await Motorista.findAll({ include: { model: Funcionario, as: 'funcionario' } });
+        const { tipo_veiculo, placa_veiculo } = req.query;
+
+        let where = {};
+        if (tipo_veiculo) where.tipo_veiculo = { [Op.iLike]: `%${tipo_veiculo}%` };
+        if (placa_veiculo) where.placa_veiculo = { [Op.iLike]: `%${placa_veiculo}%` };
+
+        const motoristas = await Motorista.findAll({
+            where,
+            include: { model: Funcionario, as: 'funcionario' }
+        });
+
         res.json(motoristas);
     } catch (error) {
         console.error("Erro ao buscar motoristas:", error);
@@ -42,15 +52,18 @@ exports.getMotoristaById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
 
-        const motorista = await Motorista.findByPk(id, { include: { model: Funcionario, as: 'funcionario' } });
+        const motorista = await Motorista.findByPk(id, {
+            include: { model: Funcionario, as: 'funcionario' }
+        });
+
         if (!motorista) {
             return res.status(404).json({ error: 'Motorista não encontrado' });
         }
+
         res.json(motorista);
     } catch (error) {
         console.error("Erro ao buscar motorista:", error);
@@ -64,7 +77,6 @@ exports.updateMotorista = async (req, res) => {
         const { id } = req.params;
         const { tipo_veiculo, placa_veiculo } = req.body;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -87,7 +99,6 @@ exports.deleteMotorista = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -104,5 +115,3 @@ exports.deleteMotorista = async (req, res) => {
         res.status(500).json({ error: 'Erro ao deletar motorista', details: error.message });
     }
 };
-
-console.log("Modelo Motorista carregado:", Motorista);

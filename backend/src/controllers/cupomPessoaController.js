@@ -1,5 +1,5 @@
 const { CupomPessoa, Cupom, Pessoa } = require('../models');
-const { Op } = require('sequelize'); // Operadores para consultas
+const { Op } = require('sequelize'); // Operadores para filtros dinâmicos
 
 // 🔹 Associar um Cupom a uma Pessoa
 exports.createCupomPessoa = async (req, res) => {
@@ -12,17 +12,14 @@ exports.createCupomPessoa = async (req, res) => {
             return res.status(400).json({ error: 'Pessoa e Cupom são obrigatórios' });
         }
 
-        // Verificar se a pessoa existe
-        const pessoa = await Pessoa.findByPk(pessoa_id);
-        if (!pessoa) {
-            return res.status(404).json({ error: 'Pessoa não encontrada' });
-        }
+        // Verificar se a pessoa e o cupom existem e são válidos
+        const [pessoa, cupom] = await Promise.all([
+            Pessoa.findByPk(pessoa_id),
+            Cupom.findByPk(cupom_id)
+        ]);
 
-        // Verificar se o cupom existe e está ativo
-        const cupom = await Cupom.findByPk(cupom_id);
-        if (!cupom || !cupom.ativo) {
-            return res.status(400).json({ error: 'Cupom inválido ou inativo' });
-        }
+        if (!pessoa) return res.status(404).json({ error: 'Pessoa não encontrada' });
+        if (!cupom || !cupom.ativo) return res.status(400).json({ error: 'Cupom inválido ou inativo' });
 
         // Verificar se a pessoa já usou esse cupom
         const cupomUsado = await CupomPessoa.findOne({ where: { pessoa_id, cupom_id } });
@@ -39,15 +36,24 @@ exports.createCupomPessoa = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todos os Cupons usados por Pessoas
+// 🔹 Buscar Cupons usados por Pessoas com Filtros Dinâmicos
 exports.getAllCuponsPessoas = async (req, res) => {
     try {
+        const { pessoa_id, cupom_id, usado } = req.query;
+
+        let where = {};
+        if (pessoa_id) where.pessoa_id = pessoa_id;
+        if (cupom_id) where.cupom_id = cupom_id;
+        if (usado !== undefined) where.usado = usado === 'true';
+
         const cuponsPessoas = await CupomPessoa.findAll({
+            where,
             include: [
                 { model: Pessoa, as: 'pessoa' },
                 { model: Cupom, as: 'cupom' }
             ]
         });
+
         res.json(cuponsPessoas);
     } catch (error) {
         console.error("Erro ao buscar cupons de pessoas:", error);
@@ -55,17 +61,21 @@ exports.getAllCuponsPessoas = async (req, res) => {
     }
 };
 
-// 🔹 Buscar cupons de uma pessoa específica
+// 🔹 Buscar Cupons de uma Pessoa com Filtros
 exports.getCuponsByPessoa = async (req, res) => {
     try {
         const { pessoa_id } = req.params;
+        const { usado } = req.query;
 
         if (!pessoa_id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
 
+        let where = { pessoa_id };
+        if (usado !== undefined) where.usado = usado === 'true';
+
         const cupons = await CupomPessoa.findAll({
-            where: { pessoa_id },
+            where,
             include: [{ model: Cupom, as: 'cupom' }]
         });
 
@@ -104,7 +114,7 @@ exports.useCupom = async (req, res) => {
     }
 };
 
-// 🔹 Deletar uma associação de cupom e pessoa
+// 🔹 Deletar uma associação de Cupom e Pessoa
 exports.deleteCupomPessoa = async (req, res) => {
     try {
         const { id } = req.params;
@@ -124,22 +134,5 @@ exports.deleteCupomPessoa = async (req, res) => {
     } catch (error) {
         console.error("Erro ao deletar associação de cupom:", error);
         res.status(500).json({ error: 'Erro ao deletar associação de cupom', details: error.message });
-    }
-};
-
-// 🔹 Buscar Cupons Não Utilizados de uma Pessoa
-exports.getCuponsNaoUsados = async (req, res) => {
-    try {
-        const { pessoa_id } = req.params;
-
-        const cuponsNaoUsados = await CupomPessoa.findAll({
-            where: { pessoa_id, usado: false },
-            include: [{ model: Cupom, as: 'cupom' }]
-        });
-
-        res.json(cuponsNaoUsados);
-    } catch (error) {
-        console.error("Erro ao buscar cupons não usados:", error);
-        res.status(500).json({ error: 'Erro ao buscar cupons não usados', details: error.message });
     }
 };

@@ -1,10 +1,10 @@
-const { Produto } = require('../models'); // Importando corretamente do index.js
-const { Op } = require('sequelize'); // Operadores para consultas
+const { Produto } = require('../models');
+const { Op } = require('sequelize');
 
 // 🔹 Criar um novo produto
 exports.createProduto = async (req, res) => {
     try {
-        console.log("Recebendo requisição para criar produto:", req.body); // Debug
+        console.log("Recebendo requisição para criar produto:", req.body);
 
         const { nome, descricao, preco, estoque, categorias, eh_alcoolico } = req.body;
 
@@ -14,19 +14,11 @@ exports.createProduto = async (req, res) => {
 
         // Verificar se já existe um produto com o mesmo nome
         const produtoExistente = await Produto.findOne({ where: { nome } });
-
         if (produtoExistente) {
             return res.status(400).json({ error: 'Produto com este nome já cadastrado' });
         }
 
-        const novoProduto = await Produto.create({
-            nome,
-            descricao,
-            preco,
-            estoque,
-            categorias,
-            eh_alcoolico
-        });
+        const novoProduto = await Produto.create({ nome, descricao, preco, estoque, categorias, eh_alcoolico });
 
         return res.status(201).json(novoProduto);
     } catch (error) {
@@ -35,10 +27,25 @@ exports.createProduto = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todos os produtos
+// 🔹 Buscar produtos com filtros dinâmicos
 exports.getAllProdutos = async (req, res) => {
     try {
-        const produtos = await Produto.findAll();
+        const { nome, preco_min, preco_max, estoque_min, estoque_max, categorias, eh_alcoolico, ordenacao, limite } = req.query;
+
+        let whereClause = {};
+
+        if (nome) whereClause.nome = { [Op.iLike]: `%${nome}%` };
+        if (preco_min || preco_max) whereClause.preco = { [Op.between]: [preco_min || 0, preco_max || Number.MAX_VALUE] };
+        if (estoque_min || estoque_max) whereClause.estoque = { [Op.between]: [estoque_min || 0, estoque_max || Number.MAX_VALUE] };
+        if (categorias) whereClause.categorias = { [Op.contains]: [categorias] };
+        if (eh_alcoolico !== undefined) whereClause.eh_alcoolico = eh_alcoolico === 'true';
+
+        const produtos = await Produto.findAll({
+            where: whereClause,
+            order: [['createdAt', ordenacao === 'asc' ? 'ASC' : 'DESC']],
+            limit: limite ? parseInt(limite) : null
+        });
+
         res.json(produtos);
     } catch (error) {
         console.error("Erro ao buscar produtos:", error);
@@ -51,7 +58,6 @@ exports.getProdutoById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -60,6 +66,7 @@ exports.getProdutoById = async (req, res) => {
         if (!produto) {
             return res.status(404).json({ error: 'Produto não encontrado' });
         }
+
         res.json(produto);
     } catch (error) {
         console.error("Erro ao buscar produto:", error);
@@ -72,7 +79,6 @@ exports.updateProduto = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -95,7 +101,6 @@ exports.deleteProduto = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -112,5 +117,3 @@ exports.deleteProduto = async (req, res) => {
         res.status(500).json({ error: 'Erro ao deletar produto', details: error.message });
     }
 };
-
-console.log("Modelo Produto carregado:", Produto);

@@ -5,17 +5,11 @@ const itemPedidoController = require('../controllers/itemPedidoController');
 // 🔹 Criar um novo item de pedido
 router.post('/', itemPedidoController.createItemPedido);
 
-// 🔹 Buscar todos os itens de pedidos
-router.get('/', itemPedidoController.getAllItensPedido);
+// 🔹 Buscar itens de pedidos com filtros dinâmicos
+router.get('/', itemPedidoController.getItensPedidos);
 
 // 🔹 Buscar um item de pedido por ID
 router.get('/:id', itemPedidoController.getItemPedidoById);
-
-// 🔹 Buscar todos os itens de um pedido específico
-router.get('/pedido/:pedido_id', itemPedidoController.getItensByPedidoId);
-
-// 🔹 Buscar todos os pedidos que contêm um determinado produto
-router.get('/produto/:produto_id', itemPedidoController.getPedidosByProdutoId);
 
 // 🔹 Buscar os produtos mais pedidos
 router.get('/relatorio/produtos-mais-pedidos', itemPedidoController.getProdutosMaisPedidos);

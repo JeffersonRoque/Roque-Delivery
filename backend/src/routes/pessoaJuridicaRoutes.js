@@ -1,11 +1,12 @@
 const express = require('express');
-const router = express.Router();
 const pessoaJuridicaController = require('../controllers/pessoaJuridicaController');
+
+const router = express.Router();
 
 // 🔹 Criar uma nova pessoa jurídica
 router.post('/', pessoaJuridicaController.create);
 
-// 🔹 Buscar todas as pessoas jurídicas
+// 🔹 Buscar pessoas jurídicas com filtros dinâmicos
 router.get('/', pessoaJuridicaController.getAll);
 
 // 🔹 Buscar uma pessoa jurídica pelo ID

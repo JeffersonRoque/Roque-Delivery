@@ -1,10 +1,10 @@
-const { ItensPedidoSubprodutos, ItensPedido, Subproduto } = require('../models'); // Importando corretamente do index.js
-const { Op } = require('sequelize'); // Operadores para consultas
+const { ItensPedidoSubprodutos, ItensPedido, Subproduto, Pedido } = require('../models');
+const { Op } = require('sequelize'); // Operadores para filtros dinâmicos
 
 // 🔹 Criar uma nova relação entre item do pedido e subproduto
 exports.createItemPedidoSubproduto = async (req, res) => {
     try {
-        console.log("Recebendo requisição para criar item_pedido_subproduto:", req.body); // Debug
+        console.log("Recebendo requisição para criar item_pedido_subproduto:", req.body);
 
         const { item_pedido_id, subproduto_id, quantidade } = req.body;
 
@@ -21,12 +21,20 @@ exports.createItemPedidoSubproduto = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todas as relações entre Itens de Pedido e Subprodutos
-exports.getAllItensPedidoSubprodutos = async (req, res) => {
+// 🔹 Buscar relações entre Itens de Pedido e Subprodutos com Filtros Dinâmicos
+exports.getItensPedidoSubprodutos = async (req, res) => {
     try {
+        const { pedido_id, item_pedido_id, subproduto_id } = req.query;
+
+        let where = {};
+        if (pedido_id) where['$itemPedido.pedido_id$'] = pedido_id;
+        if (item_pedido_id) where.item_pedido_id = item_pedido_id;
+        if (subproduto_id) where.subproduto_id = subproduto_id;
+
         const itensPedidoSubprodutos = await ItensPedidoSubprodutos.findAll({
+            where,
             include: [
-                { model: ItensPedido, as: 'itemPedido' },
+                { model: ItensPedido, as: 'itemPedido', include: [{ model: Pedido, as: 'pedido' }] },
                 { model: Subproduto, as: 'subproduto' }
             ]
         });
@@ -43,14 +51,13 @@ exports.getItemPedidoSubprodutoById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
 
         const itemPedidoSubproduto = await ItensPedidoSubprodutos.findByPk(id, {
             include: [
-                { model: ItensPedido, as: 'itemPedido' },
+                { model: ItensPedido, as: 'itemPedido', include: [{ model: Pedido, as: 'pedido' }] },
                 { model: Subproduto, as: 'subproduto' }
             ]
         });
@@ -65,88 +72,12 @@ exports.getItemPedidoSubprodutoById = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todos os subprodutos de um pedido específico
-exports.getByPedidoId = async (req, res) => {
-    try {
-        const { pedido_id } = req.params;
-
-        const itens = await ItensPedidoSubprodutos.findAll({
-            include: [
-                {
-                    model: ItensPedido,
-                    as: 'itemPedido',
-                    where: { pedido_id }
-                },
-                { model: Subproduto, as: 'subproduto' }
-            ]
-        });
-
-        if (itens.length === 0) {
-            return res.status(404).json({ error: 'Nenhum subproduto encontrado para este pedido' });
-        }
-
-        res.json(itens);
-    } catch (error) {
-        console.error("Erro ao buscar subprodutos do pedido:", error);
-        res.status(500).json({ error: 'Erro ao buscar subprodutos do pedido', details: error.message });
-    }
-};
-
-// 🔹 Buscar todos os subprodutos de um item de pedido
-exports.getByItemPedidoId = async (req, res) => {
-    try {
-        const { item_pedido_id } = req.params;
-
-        const itens = await ItensPedidoSubprodutos.findAll({
-            where: { item_pedido_id },
-            include: [{ model: Subproduto, as: 'subproduto' }]
-        });
-
-        if (itens.length === 0) {
-            return res.status(404).json({ error: 'Nenhum subproduto encontrado para este item do pedido' });
-        }
-
-        res.json(itens);
-    } catch (error) {
-        console.error("Erro ao buscar subprodutos do item do pedido:", error);
-        res.status(500).json({ error: 'Erro ao buscar subprodutos do item do pedido', details: error.message });
-    }
-};
-
-// 🔹 Buscar todos os pedidos que contêm um determinado subproduto
-exports.getBySubprodutoId = async (req, res) => {
-    try {
-        const { subproduto_id } = req.params;
-
-        const itens = await ItensPedidoSubprodutos.findAll({
-            where: { subproduto_id },
-            include: [
-                {
-                    model: ItensPedido,
-                    as: 'itemPedido',
-                    include: [{ model: Pedido, as: 'pedido' }]
-                }
-            ]
-        });
-
-        if (itens.length === 0) {
-            return res.status(404).json({ error: 'Nenhum pedido encontrado com este subproduto' });
-        }
-
-        res.json(itens);
-    } catch (error) {
-        console.error("Erro ao buscar pedidos pelo subproduto:", error);
-        res.status(500).json({ error: 'Erro ao buscar pedidos pelo subproduto', details: error.message });
-    }
-};
-
 // 🔹 Atualizar um item_pedido_subproduto
 exports.updateItemPedidoSubproduto = async (req, res) => {
     try {
         const { id } = req.params;
         const { quantidade } = req.body;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -170,7 +101,6 @@ exports.deleteItemPedidoSubproduto = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }

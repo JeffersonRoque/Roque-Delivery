@@ -1,10 +1,10 @@
-const { ItemPedido, Pedido, Produto } = require('../models'); // Importando corretamente do index.js
-const { Op } = require('sequelize'); // Operadores para consultas
+const { ItemPedido, Pedido, Produto } = require('../models');
+const { Op, fn, col, literal } = require('sequelize'); // Operadores para filtros dinâmicos
 
 // 🔹 Criar um novo item no pedido
 exports.createItemPedido = async (req, res) => {
     try {
-        console.log("Recebendo requisição para adicionar item ao pedido:", req.body); // Debug
+        console.log("Recebendo requisição para adicionar item ao pedido:", req.body);
 
         const { pedido_id, produto_id, quantidade, preco_unitario } = req.body;
 
@@ -40,12 +40,26 @@ exports.createItemPedido = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todos os itens de pedidos
-exports.getAllItensPedidos = async (req, res) => {
+// 🔹 Buscar Itens de Pedido com Filtros Dinâmicos
+exports.getItensPedidos = async (req, res) => {
     try {
+        const { pedido_id, produto_id, data_inicio, data_fim } = req.query;
+
+        let where = {};
+        if (pedido_id) where.pedido_id = pedido_id;
+        if (produto_id) where.produto_id = produto_id;
+        if (data_inicio && data_fim) {
+            where.createdAt = { [Op.between]: [new Date(data_inicio), new Date(data_fim)] };
+        }
+
         const itensPedidos = await ItemPedido.findAll({
-            include: [{ model: Pedido, as: 'pedido' }, { model: Produto, as: 'produto' }]
+            where,
+            include: [
+                { model: Pedido, as: 'pedido' },
+                { model: Produto, as: 'produto' }
+            ]
         });
+
         res.json(itensPedidos);
     } catch (error) {
         console.error("Erro ao buscar itens de pedidos:", error);
@@ -76,63 +90,13 @@ exports.getItemPedidoById = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todos os itens de um pedido específico
-exports.getItensByPedidoId = async (req, res) => {
-    try {
-        const { pedido_id } = req.params;
-
-        if (!pedido_id.match(/^[0-9a-fA-F-]{36}$/)) {
-            return res.status(400).json({ error: 'ID do pedido inválido' });
-        }
-
-        const itensPedido = await ItemPedido.findAll({
-            where: { pedido_id },
-            include: [{ model: Produto, as: 'produto' }]
-        });
-
-        if (itensPedido.length === 0) {
-            return res.status(404).json({ error: 'Nenhum item encontrado para este pedido' });
-        }
-
-        res.json(itensPedido);
-    } catch (error) {
-        console.error("Erro ao buscar itens do pedido:", error);
-        res.status(500).json({ error: 'Erro ao buscar itens do pedido', details: error.message });
-    }
-};
-
-// 🔹 Buscar todos os pedidos que contêm um determinado produto
-exports.getPedidosByProdutoId = async (req, res) => {
-    try {
-        const { produto_id } = req.params;
-
-        if (!produto_id.match(/^[0-9a-fA-F-]{36}$/)) {
-            return res.status(400).json({ error: 'ID do produto inválido' });
-        }
-
-        const pedidos = await ItemPedido.findAll({
-            where: { produto_id },
-            include: [{ model: Pedido, as: 'pedido' }]
-        });
-
-        if (pedidos.length === 0) {
-            return res.status(404).json({ error: 'Nenhum pedido encontrado para este produto' });
-        }
-
-        res.json(pedidos);
-    } catch (error) {
-        console.error("Erro ao buscar pedidos por produto:", error);
-        res.status(500).json({ error: 'Erro ao buscar pedidos por produto', details: error.message });
-    }
-};
-
 // 🔹 Buscar os produtos mais pedidos
 exports.getProdutosMaisPedidos = async (req, res) => {
     try {
         const produtosMaisPedidos = await ItemPedido.findAll({
-            attributes: ['produto_id', [sequelize.fn('SUM', sequelize.col('quantidade')), 'total_vendido']],
+            attributes: ['produto_id', [fn('SUM', col('quantidade')), 'total_vendido']],
             group: ['produto_id'],
-            order: [[sequelize.literal('total_vendido'), 'DESC']],
+            order: [[literal('total_vendido'), 'DESC']],
             include: [{ model: Produto, as: 'produto' }]
         });
 
@@ -147,7 +111,7 @@ exports.getProdutosMaisPedidos = async (req, res) => {
 exports.getTotalVendasPorProduto = async (req, res) => {
     try {
         const totalVendasPorProduto = await ItemPedido.findAll({
-            attributes: ['produto_id', [sequelize.fn('SUM', sequelize.col('preco')), 'total_faturado']],
+            attributes: ['produto_id', [fn('SUM', col('preco')), 'total_faturado']],
             group: ['produto_id'],
             include: [{ model: Produto, as: 'produto' }]
         });

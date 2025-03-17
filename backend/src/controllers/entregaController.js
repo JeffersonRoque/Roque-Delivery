@@ -1,10 +1,10 @@
-const { Entrega, Pedido, Motorista } = require('../models'); // Importando corretamente do index.js
-const { Op } = require('sequelize'); // Operadores para consultas
+const { Entrega, Pedido, Motorista } = require('../models');
+const { Op } = require('sequelize'); // Operadores para consultas dinâmicas
 
 // 🔹 Criar uma nova entrega
 exports.createEntrega = async (req, res) => {
     try {
-        console.log("Recebendo requisição para criar entrega:", req.body); // Debug
+        console.log("Recebendo requisição para criar entrega:", req.body);
 
         const { pedido_id, motorista_id, status } = req.body;
 
@@ -21,15 +21,27 @@ exports.createEntrega = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todas as entregas
-exports.getAllEntregas = async (req, res) => {
+// 🔹 Buscar Entregas com Filtros Dinâmicos
+exports.getEntregas = async (req, res) => {
     try {
+        const { status, motorista_id, pedido_id, data_inicio, data_fim } = req.query;
+
+        let where = {};
+        if (status) where.status = status;
+        if (motorista_id) where.motorista_id = motorista_id;
+        if (pedido_id) where.pedido_id = pedido_id;
+        if (data_inicio && data_fim) {
+            where.criado_em = { [Op.between]: [new Date(data_inicio), new Date(data_fim)] };
+        }
+
         const entregas = await Entrega.findAll({
+            where,
             include: [
                 { model: Pedido, as: 'pedido' },
                 { model: Motorista, as: 'motorista' }
             ]
         });
+
         res.json(entregas);
     } catch (error) {
         console.error("Erro ao buscar entregas:", error);
@@ -61,43 +73,6 @@ exports.getEntregaById = async (req, res) => {
     } catch (error) {
         console.error("Erro ao buscar entrega:", error);
         res.status(500).json({ error: 'Erro ao buscar entrega', details: error.message });
-    }
-};
-
-// 🔹 Buscar entregas por status
-exports.getEntregasByStatus = async (req, res) => {
-    try {
-        const { status } = req.params;
-
-        const entregas = await Entrega.findAll({
-            where: { status },
-            include: [
-                { model: Pedido, as: 'pedido' },
-                { model: Motorista, as: 'motorista' }
-            ]
-        });
-
-        res.json(entregas);
-    } catch (error) {
-        console.error("Erro ao buscar entregas por status:", error);
-        res.status(500).json({ error: 'Erro ao buscar entregas por status', details: error.message });
-    }
-};
-
-// 🔹 Buscar todas as entregas de um motorista específico
-exports.getEntregasByMotorista = async (req, res) => {
-    try {
-        const { motorista_id } = req.params;
-
-        const entregas = await Entrega.findAll({
-            where: { motorista_id },
-            include: [{ model: Pedido, as: 'pedido' }]
-        });
-
-        res.json(entregas);
-    } catch (error) {
-        console.error("Erro ao buscar entregas do motorista:", error);
-        res.status(500).json({ error: 'Erro ao buscar entregas do motorista', details: error.message });
     }
 };
 
@@ -146,5 +121,3 @@ exports.deleteEntrega = async (req, res) => {
         res.status(500).json({ error: 'Erro ao deletar entrega', details: error.message });
     }
 };
-
-console.log("Modelo Entrega carregado:", Entrega);

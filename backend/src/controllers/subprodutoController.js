@@ -1,10 +1,10 @@
-const { Subproduto } = require('../models'); // Importando corretamente do index.js
-const { Op } = require('sequelize'); // Operadores para consultas
+const { Subproduto } = require('../models');
+const { Op } = require('sequelize');
 
 // 🔹 Criar um novo subproduto
 exports.createSubproduto = async (req, res) => {
     try {
-        console.log("Recebendo requisição para criar subproduto:", req.body); // Debug
+        console.log("Recebendo requisição para criar subproduto:", req.body);
 
         const { nome, descricao, preco, estoque } = req.body;
 
@@ -26,10 +26,23 @@ exports.createSubproduto = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todos os subprodutos
+// 🔹 Buscar subprodutos com filtros dinâmicos
 exports.getAllSubprodutos = async (req, res) => {
     try {
-        const subprodutos = await Subproduto.findAll();
+        const { nome, preco_min, preco_max, estoque_min, estoque_max, ordenacao, limite } = req.query;
+
+        let whereClause = {};
+
+        if (nome) whereClause.nome = { [Op.iLike]: `%${nome}%` };
+        if (preco_min || preco_max) whereClause.preco = { [Op.between]: [preco_min || 0, preco_max || Number.MAX_VALUE] };
+        if (estoque_min || estoque_max) whereClause.estoque = { [Op.between]: [estoque_min || 0, estoque_max || Number.MAX_VALUE] };
+
+        const subprodutos = await Subproduto.findAll({
+            where: whereClause,
+            order: [['createdAt', ordenacao === 'asc' ? 'ASC' : 'DESC']],
+            limit: limite ? parseInt(limite) : null
+        });
+
         res.json(subprodutos);
     } catch (error) {
         console.error("Erro ao buscar subprodutos:", error);
@@ -42,7 +55,6 @@ exports.getSubprodutoById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -51,6 +63,7 @@ exports.getSubprodutoById = async (req, res) => {
         if (!subproduto) {
             return res.status(404).json({ error: 'Subproduto não encontrado' });
         }
+
         res.json(subproduto);
     } catch (error) {
         console.error("Erro ao buscar subproduto:", error);
@@ -62,9 +75,8 @@ exports.getSubprodutoById = async (req, res) => {
 exports.updateSubproduto = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nome, preco, estoque } = req.body;
+        const { nome } = req.body;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -79,7 +91,7 @@ exports.updateSubproduto = async (req, res) => {
             const existeOutroSubproduto = await Subproduto.findOne({
                 where: {
                     nome,
-                    id: { [Op.ne]: id } // Garante que não seja o próprio subproduto
+                    id: { [Op.ne]: id }
                 }
             });
 
@@ -101,7 +113,6 @@ exports.deleteSubproduto = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Verifica se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -118,5 +129,3 @@ exports.deleteSubproduto = async (req, res) => {
         res.status(500).json({ error: 'Erro ao deletar subproduto', details: error.message });
     }
 };
-
-console.log("Modelo Subproduto carregado:", Subproduto);

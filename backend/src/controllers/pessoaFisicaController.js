@@ -1,10 +1,10 @@
 const { Pessoa, PessoaFisica } = require('../models');
-const { Op } = require('sequelize');
+const { Op } = require('sequelize'); // Operadores para consultas dinâmicas
 
 // 🔹 Criar uma nova Pessoa Física
 exports.create = async (req, res) => {
     try {
-        console.log("Recebendo requisição para criar Pessoa Física:", req.body); // Debug
+        console.log("Recebendo requisição para criar Pessoa Física:", req.body);
 
         const { nome, email, senha_hash, telefone, endereco, cpf, data_nascimento } = req.body;
 
@@ -13,21 +13,11 @@ exports.create = async (req, res) => {
         }
 
         // Verificar se já existe uma pessoa com mesmo e-mail, telefone ou CPF
-        const pessoaExistente = await Pessoa.findOne({
-            where: {
-                [Op.or]: [{ email }, { telefone }]
-            }
-        });
-
-        if (pessoaExistente) {
-            return res.status(400).json({ error: 'E-mail ou telefone já cadastrado' });
-        }
+        const pessoaExistente = await Pessoa.findOne({ where: { [Op.or]: [{ email }, { telefone }] } });
+        if (pessoaExistente) return res.status(400).json({ error: 'E-mail ou telefone já cadastrado' });
 
         const cpfExistente = await PessoaFisica.findOne({ where: { cpf } });
-
-        if (cpfExistente) {
-            return res.status(400).json({ error: 'CPF já cadastrado' });
-        }
+        if (cpfExistente) return res.status(400).json({ error: 'CPF já cadastrado' });
 
         // Criar Pessoa e Pessoa Física
         const pessoa = await Pessoa.create({ nome, email, senha_hash, telefone, endereco, tipo_pessoa: 'fisica' });
@@ -40,14 +30,35 @@ exports.create = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todas as Pessoas Físicas
+// 🔹 Buscar Pessoas Físicas com Filtros Dinâmicos
 exports.getAll = async (req, res) => {
     try {
-        const pessoasFisicas = await PessoaFisica.findAll({ include: { model: Pessoa, as: 'pessoa' } });
+        const { nome, email, telefone, cpf, data_nascimento, limite, ordenacao } = req.query;
+
+        let wherePessoa = {};
+        let wherePessoaFisica = {};
+
+        if (nome) wherePessoa.nome = { [Op.iLike]: `%${nome}%` };
+        if (email) wherePessoa.email = { [Op.iLike]: `%${email}%` };
+        if (telefone) wherePessoa.telefone = telefone;
+        if (cpf) wherePessoaFisica.cpf = cpf;
+        if (data_nascimento) wherePessoaFisica.data_nascimento = data_nascimento;
+
+        const pessoasFisicas = await PessoaFisica.findAll({
+            where: wherePessoaFisica,
+            include: {
+                model: Pessoa,
+                as: 'pessoa',
+                where: wherePessoa
+            },
+            order: [['createdAt', ordenacao === 'asc' ? 'ASC' : 'DESC']],
+            limit: limite ? parseInt(limite) : null
+        });
+
         res.json(pessoasFisicas);
     } catch (error) {
         console.error("Erro ao buscar Pessoas Físicas:", error);
-        res.status(500).json({ error: 'Erro ao buscar Pessoas Físicas' });
+        res.status(500).json({ error: 'Erro ao buscar Pessoas Físicas', details: error.message });
     }
 };
 
@@ -56,7 +67,6 @@ exports.getById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Validar se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -70,7 +80,7 @@ exports.getById = async (req, res) => {
         res.json(pessoaFisica);
     } catch (error) {
         console.error("Erro ao buscar Pessoa Física:", error);
-        res.status(500).json({ error: 'Erro ao buscar Pessoa Física' });
+        res.status(500).json({ error: 'Erro ao buscar Pessoa Física', details: error.message });
     }
 };
 
@@ -80,14 +90,11 @@ exports.update = async (req, res) => {
         const { id } = req.params;
         const { nome, email, senha_hash, telefone, endereco, cpf, data_nascimento } = req.body;
 
-        // Validar se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
 
-        // Buscar a Pessoa Física e sua Pessoa relacionada em uma única consulta
         const pessoaFisica = await PessoaFisica.findByPk(id, { include: { model: Pessoa, as: 'pessoa' } });
-
         if (!pessoaFisica) {
             return res.status(404).json({ error: 'Pessoa Física não encontrada' });
         }
@@ -97,26 +104,22 @@ exports.update = async (req, res) => {
             const pessoaExistente = await Pessoa.findOne({
                 where: {
                     [Op.or]: [{ email }, { telefone }],
-                    id: { [Op.ne]: id } // Garante que não seja a própria pessoa
+                    id: { [Op.ne]: id }
                 }
             });
 
-            if (pessoaExistente) {
-                return res.status(400).json({ error: 'E-mail ou telefone já está em uso por outra pessoa' });
-            }
+            if (pessoaExistente) return res.status(400).json({ error: 'E-mail ou telefone já está em uso por outra pessoa' });
         }
 
         if (cpf) {
             const cpfExistente = await PessoaFisica.findOne({
                 where: {
                     cpf,
-                    id: { [Op.ne]: id } // Garante que não seja a própria pessoa
+                    id: { [Op.ne]: id }
                 }
             });
 
-            if (cpfExistente) {
-                return res.status(400).json({ error: 'CPF já está em uso por outra pessoa' });
-            }
+            if (cpfExistente) return res.status(400).json({ error: 'CPF já está em uso por outra pessoa' });
         }
 
         // Atualizar os dados
@@ -126,7 +129,7 @@ exports.update = async (req, res) => {
         res.json({ ...pessoaFisica.pessoa.toJSON(), ...pessoaFisica.toJSON() });
     } catch (error) {
         console.error("Erro ao atualizar Pessoa Física:", error);
-        res.status(500).json({ error: 'Erro ao atualizar Pessoa Física' });
+        res.status(500).json({ error: 'Erro ao atualizar Pessoa Física', details: error.message });
     }
 };
 
@@ -135,23 +138,20 @@ exports.delete = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Validar se o ID é um UUID válido
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
 
         const pessoaFisica = await PessoaFisica.findByPk(id, { include: { model: Pessoa, as: 'pessoa' } });
-
         if (!pessoaFisica) {
             return res.status(404).json({ error: 'Pessoa Física não encontrada' });
         }
 
-        // Deleta primeiro a Pessoa associada
         await pessoaFisica.pessoa.destroy();
 
         res.status(204).send();
     } catch (error) {
         console.error("Erro ao deletar Pessoa Física:", error);
-        res.status(500).json({ error: 'Erro ao deletar Pessoa Física' });
+        res.status(500).json({ error: 'Erro ao deletar Pessoa Física', details: error.message });
     }
 };

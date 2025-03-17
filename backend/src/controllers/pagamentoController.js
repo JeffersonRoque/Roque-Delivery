@@ -1,5 +1,5 @@
 const { Pagamento, Pedido } = require('../models');
-const { Op } = require('sequelize'); // Operadores para consultas
+const { Op } = require('sequelize'); // Operadores para consultas dinâmicas
 
 // 🔹 Criar um novo pagamento
 exports.createPagamento = async (req, res) => {
@@ -21,12 +21,25 @@ exports.createPagamento = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todos os pagamentos
-exports.getAllPagamentos = async (req, res) => {
+// 🔹 Buscar Pagamentos com Filtros Dinâmicos
+exports.getPagamentos = async (req, res) => {
     try {
+        const { pedido_id, metodo_pagamento, status, min_valor, max_valor, inicio, fim } = req.query;
+
+        let where = {};
+        if (pedido_id) where.pedido_id = pedido_id;
+        if (metodo_pagamento) where.metodo_pagamento = metodo_pagamento;
+        if (status) where.status = status;
+        if (min_valor) where.valor_pago = { [Op.gte]: parseFloat(min_valor) };
+        if (max_valor) where.valor_pago = { [Op.lte]: parseFloat(max_valor) };
+        if (min_valor && max_valor) where.valor_pago = { [Op.between]: [parseFloat(min_valor), parseFloat(max_valor)] };
+        if (inicio && fim) where.createdAt = { [Op.between]: [new Date(inicio), new Date(fim)] };
+
         const pagamentos = await Pagamento.findAll({
+            where,
             include: { model: Pedido, as: 'pedido' }
         });
+
         res.json(pagamentos);
     } catch (error) {
         console.error("Erro ao buscar pagamentos:", error);
@@ -58,27 +71,6 @@ exports.getPagamentoById = async (req, res) => {
     }
 };
 
-// 🔹 Buscar pagamentos por pedido
-exports.getPagamentosByPedido = async (req, res) => {
-    try {
-        const { pedido_id } = req.params;
-
-        if (!pedido_id.match(/^[0-9a-fA-F-]{36}$/)) {
-            return res.status(400).json({ error: 'ID de pedido inválido' });
-        }
-
-        const pagamentos = await Pagamento.findAll({
-            where: { pedido_id },
-            include: { model: Pedido, as: 'pedido' }
-        });
-
-        res.json(pagamentos);
-    } catch (error) {
-        console.error("Erro ao buscar pagamentos por pedido:", error);
-        res.status(500).json({ error: 'Erro ao buscar pagamentos', details: error.message });
-    }
-};
-
 // 🔹 Atualizar um pagamento
 exports.updatePagamento = async (req, res) => {
     try {
@@ -90,7 +82,6 @@ exports.updatePagamento = async (req, res) => {
         }
 
         const pagamento = await Pagamento.findByPk(id);
-
         if (!pagamento) {
             return res.status(404).json({ error: 'Pagamento não encontrado' });
         }

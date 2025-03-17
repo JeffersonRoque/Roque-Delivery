@@ -6,8 +6,8 @@ const router = express.Router();
 // 🔹 Criar um novo pagamento
 router.post('/', pagamentoController.createPagamento);
 
-// 🔹 Buscar todos os pagamentos
-router.get('/', pagamentoController.getAllPagamentos);
+// 🔹 Buscar Pagamentos com Filtros Dinâmicos
+router.get('/', pagamentoController.getPagamentos);
 
 // 🔹 Buscar um pagamento por ID
 router.get('/:id', pagamentoController.getPagamentoById);
@@ -17,8 +17,5 @@ router.put('/:id', pagamentoController.updatePagamento);
 
 // 🔹 Deletar um pagamento
 router.delete('/:id', pagamentoController.deletePagamento);
-
-// 🔹 Buscar pagamentos por pedido
-router.get('/pedido/:pedido_id', pagamentoController.getPagamentosByPedido);
 
 module.exports = router;

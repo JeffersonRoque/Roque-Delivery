@@ -1,12 +1,13 @@
 const express = require('express');
-const router = express.Router();
 const funcionarioController = require('../controllers/funcionarioController');
+
+const router = express.Router();
 
 // 🔹 Criar um novo funcionário
 router.post('/', funcionarioController.createFuncionario);
 
-// 🔹 Buscar todos os funcionários
-router.get('/', funcionarioController.getAllFuncionarios);
+// 🔹 Buscar funcionários com Filtros Dinâmicos (cargo, empregador_id, nome, data_inicio, data_fim)
+router.get('/', funcionarioController.getFuncionarios);
 
 // 🔹 Buscar um funcionário por ID
 router.get('/:id', funcionarioController.getFuncionarioById);

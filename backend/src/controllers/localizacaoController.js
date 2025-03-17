@@ -1,5 +1,5 @@
 const { Localizacao, Pessoa, Motorista } = require('../models');
-const { Op } = require('sequelize'); // Operadores para consultas
+const { Op } = require('sequelize'); // Operadores para filtros dinâmicos
 
 // 🔹 Criar uma nova localização
 exports.createLocalizacao = async (req, res) => {
@@ -21,15 +21,25 @@ exports.createLocalizacao = async (req, res) => {
     }
 };
 
-// 🔹 Buscar todas as localizações
-exports.getAllLocalizacoes = async (req, res) => {
+// 🔹 Buscar Localizações com Filtros Dinâmicos
+exports.getLocalizacoes = async (req, res) => {
     try {
+        const { pessoa_id, motorista_id, latitude, longitude } = req.query;
+
+        let where = {};
+        if (pessoa_id) where.pessoa_id = pessoa_id;
+        if (motorista_id) where.motorista_id = motorista_id;
+        if (latitude) where.latitude = latitude;
+        if (longitude) where.longitude = longitude;
+
         const localizacoes = await Localizacao.findAll({
+            where,
             include: [
                 { model: Pessoa, as: 'pessoa' },
                 { model: Motorista, as: 'motorista' }
             ]
         });
+
         res.json(localizacoes);
     } catch (error) {
         console.error("Erro ao buscar localizações:", error);
@@ -63,49 +73,6 @@ exports.getLocalizacaoById = async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar localização', details: error.message });
     }
 };
-
-// 🔹 Buscar todas as localizações de uma pessoa específica
-exports.getLocalizacoesByPessoa = async (req, res) => {
-    try {
-        const { pessoa_id } = req.params;
-
-        if (!pessoa_id.match(/^[0-9a-fA-F-]{36}$/)) {
-            return res.status(400).json({ error: 'ID inválido' });
-        }
-
-        const localizacoes = await Localizacao.findAll({
-            where: { pessoa_id },
-            include: { model: Pessoa, as: 'pessoa' }
-        });
-
-        res.json(localizacoes);
-    } catch (error) {
-        console.error("Erro ao buscar localizações da pessoa:", error);
-        res.status(500).json({ error: 'Erro ao buscar localizações', details: error.message });
-    }
-};
-
-// 🔹 Buscar todas as localizações de um motorista específico
-exports.getLocalizacoesByMotorista = async (req, res) => {
-    try {
-        const { motorista_id } = req.params;
-
-        if (!motorista_id.match(/^[0-9a-fA-F-]{36}$/)) {
-            return res.status(400).json({ error: 'ID inválido' });
-        }
-
-        const localizacoes = await Localizacao.findAll({
-            where: { motorista_id },
-            include: { model: Motorista, as: 'motorista' }
-        });
-
-        res.json(localizacoes);
-    } catch (error) {
-        console.error("Erro ao buscar localizações do motorista:", error);
-        res.status(500).json({ error: 'Erro ao buscar localizações', details: error.message });
-    }
-};
-
 
 // 🔹 Atualizar uma localização
 exports.updateLocalizacao = async (req, res) => {

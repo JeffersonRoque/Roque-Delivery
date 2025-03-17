@@ -5,8 +5,8 @@ const motoristaController = require('../controllers/motoristaController');
 // 🔹 Criar um novo motorista
 router.post('/', motoristaController.createMotorista);
 
-// 🔹 Buscar todos os motoristas
-router.get('/', motoristaController.getAllMotoristas);
+// 🔹 Buscar motoristas com filtros dinâmicos
+router.get('/', motoristaController.getMotoristas);
 
 // 🔹 Buscar um motorista por ID
 router.get('/:id', motoristaController.getMotoristaById);
