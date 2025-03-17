@@ -234,8 +234,8 @@ CREATE TABLE Audit_Logs (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     alterado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
--- INDEX
 
+-- INDEX
 CREATE INDEX idx_pedidos_pessoa ON Pedidos(pessoa_id);
 CREATE INDEX idx_motoristas_funcionarios ON Motoristas(id);
 CREATE INDEX idx_itens_pedido ON Itens_Pedido(pedido_id);

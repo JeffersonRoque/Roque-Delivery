@@ -1,17 +1,6 @@
 const { Pessoa } = require('../models'); // Importando corretamente do index.js
 const { Op } = require('sequelize'); // Operadores para consultas
 
-// 🔹 Listar todas as pessoas
-exports.getAllPessoas = async (req, res) => {
-    try {
-        const pessoas = await Pessoa.findAll();
-        res.json(pessoas);
-    } catch (error) {
-        console.error("Erro ao buscar pessoas:", error);
-        res.status(500).json({ error: 'Erro ao buscar pessoas', details: error.message });
-    }
-};
-
 // 🔹 Criar uma nova pessoa
 exports.createPessoa = async (req, res) => {
     try {
@@ -40,6 +29,17 @@ exports.createPessoa = async (req, res) => {
     } catch (error) {
         console.error("Erro ao criar pessoa:", error);
         return res.status(500).json({ error: 'Erro ao criar pessoa', details: error.message });
+    }
+};
+
+// 🔹 Busca todas as pessoas
+exports.getAllPessoas = async (req, res) => {
+    try {
+        const pessoas = await Pessoa.findAll();
+        res.json(pessoas);
+    } catch (error) {
+        console.error("Erro ao buscar pessoas:", error);
+        res.status(500).json({ error: 'Erro ao buscar pessoas', details: error.message });
     }
 };
 
