@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const avaliacoesController = require('../controllers/avaliacoesController');
+const avaliacoesController = require('../controllers/avaliacaoController');
 
 // 🔹 Criar uma nova avaliação
 router.post('/', avaliacoesController.createAvaliacao);

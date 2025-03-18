@@ -42,7 +42,7 @@ exports.getAllProdutos = async (req, res) => {
 
         const produtos = await Produto.findAll({
             where: whereClause,
-            order: [['createdAt', ordenacao === 'asc' ? 'ASC' : 'DESC']],
+            order: [['criado_em', ordenacao === 'asc' ? 'ASC' : 'DESC']],
             limit: limite ? parseInt(limite) : null
         });
 

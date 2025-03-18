@@ -39,7 +39,7 @@ exports.getAllSubprodutos = async (req, res) => {
 
         const subprodutos = await Subproduto.findAll({
             where: whereClause,
-            order: [['createdAt', ordenacao === 'asc' ? 'ASC' : 'DESC']],
+            order: [['criado_em', ordenacao === 'asc' ? 'ASC' : 'DESC']],
             limit: limite ? parseInt(limite) : null
         });
 

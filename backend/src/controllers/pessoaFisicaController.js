@@ -51,7 +51,7 @@ exports.getAll = async (req, res) => {
                 as: 'pessoa',
                 where: wherePessoa
             },
-            order: [['createdAt', ordenacao === 'asc' ? 'ASC' : 'DESC']],
+            order: [['criado_em', ordenacao === 'asc' ? 'ASC' : 'DESC']],
             limit: limite ? parseInt(limite) : null
         });
 

@@ -47,7 +47,7 @@ exports.getPedidos = async (req, res) => {
 
         const pedidos = await Pedido.findAll({
             where,
-            order: [['createdAt', ordenacao === 'asc' ? 'ASC' : 'DESC']],
+            order: [['criado_em', ordenacao === 'asc' ? 'ASC' : 'DESC']],
             limit: limite ? parseInt(limite) : null,
             include: { model: Pessoa, as: 'pessoa' }
         });
