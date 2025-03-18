@@ -84,7 +84,7 @@ exports.getNotaFiscalById = async (req, res) => {
 exports.updateNotaFiscal = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, pedido_id, emissor_id, numero_nota } = req.body;
 
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
@@ -95,15 +95,39 @@ exports.updateNotaFiscal = async (req, res) => {
             return res.status(404).json({ error: 'Nota Fiscal não encontrada' });
         }
 
-        await notaFiscal.update({ status });
-        res.json(notaFiscal);
+        // Verifica se campos bloqueados estão sendo alterados
+        if (pedido_id && pedido_id !== notaFiscal.pedido_id ||
+            emissor_id && emissor_id !== notaFiscal.emissor_id ||
+            numero_nota && numero_nota !== notaFiscal.numero_nota) {
+            return res.status(400).json({
+                error: 'Os campos Pedido, Emissor e Número da Nota não podem ser alterados após a criação da Nota Fiscal.'
+            });
+        }
+
+        try {
+            await notaFiscal.update({ status });
+            res.json(notaFiscal);
+        } catch (error) {
+            console.error("Erro ao atualizar nota fiscal:", error);
+
+            // Captura erro da trigger que impede alteração dos campos bloqueados
+            if (error.message.includes("O pedido vinculado à Nota Fiscal não pode ser alterado") ||
+                error.message.includes("O emissor da Nota Fiscal não pode ser alterado") ||
+                error.message.includes("O número da Nota Fiscal não pode ser alterado")) {
+                return res.status(400).json({
+                    error: 'Os campos Pedido, Emissor e Número da Nota não podem ser alterados após a criação da Nota Fiscal.'
+                });
+            }
+
+            return res.status(500).json({ error: 'Erro ao atualizar nota fiscal', details: error.message });
+        }
     } catch (error) {
         console.error("Erro ao atualizar nota fiscal:", error);
         res.status(500).json({ error: 'Erro ao atualizar nota fiscal', details: error.message });
     }
 };
 
-// 🔹 Deletar uma Nota Fiscal
+// 🔹 Deletar uma Nota Fiscal (Deve ser cancelada, não excluída)
 exports.deleteNotaFiscal = async (req, res) => {
     try {
         const { id } = req.params;
@@ -117,8 +141,21 @@ exports.deleteNotaFiscal = async (req, res) => {
             return res.status(404).json({ error: 'Nota Fiscal não encontrada' });
         }
 
-        await notaFiscal.destroy();
-        res.status(204).send();
+        try {
+            await notaFiscal.destroy();
+            res.status(204).send();
+        } catch (error) {
+            console.error("Erro ao excluir nota fiscal:", error);
+
+            // Captura erro da trigger que impede exclusão da NF
+            if (error.message.includes("Notas fiscais não podem ser excluídas")) {
+                return res.status(400).json({
+                    error: 'Notas fiscais não podem ser excluídas. Para invalidá-las, o status deve ser alterado para "cancelada".'
+                });
+            }
+
+            return res.status(500).json({ error: 'Erro ao deletar nota fiscal', details: error.message });
+        }
     } catch (error) {
         console.error("Erro ao deletar nota fiscal:", error);
         res.status(500).json({ error: 'Erro ao deletar nota fiscal', details: error.message });

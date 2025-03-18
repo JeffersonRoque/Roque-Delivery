@@ -27,9 +27,20 @@ exports.createCupomPessoa = async (req, res) => {
             return res.status(400).json({ error: 'Cupom já utilizado por essa pessoa' });
         }
 
-        const novaAssociacao = await CupomPessoa.create({ pessoa_id, cupom_id });
+        // Tenta associar o cupom à pessoa e captura erro da trigger se o cupom estiver expirado
+        try {
+            const novaAssociacao = await CupomPessoa.create({ pessoa_id, cupom_id });
+            return res.status(201).json(novaAssociacao);
+        } catch (error) {
+            console.error("Erro ao associar cupom a pessoa:", error);
 
-        return res.status(201).json(novaAssociacao);
+            // Captura erro da trigger se o cupom estiver expirado
+            if (error.message.includes("Este cupom está expirado")) {
+                return res.status(400).json({ error: 'Este cupom já expirou e não pode ser utilizado.' });
+            }
+
+            return res.status(500).json({ error: 'Erro ao associar cupom', details: error.message });
+        }
     } catch (error) {
         console.error("Erro ao associar cupom a pessoa:", error);
         return res.status(500).json({ error: 'Erro ao associar cupom', details: error.message });

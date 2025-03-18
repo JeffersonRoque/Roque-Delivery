@@ -15,13 +15,21 @@ exports.createMotorista = async (req, res) => {
         // Verificar se o funcionário existe antes de criar o motorista
         const funcionario = await Funcionario.findByPk(id);
         if (!funcionario) {
-            return res.status(404).json({ error: 'Funcionário não encontrado' });
+            return res.status(400).json({ error: 'Funcionário não encontrado. Um motorista deve ser um funcionário válido.' });
         }
 
+        // Criar motorista e capturar possíveis erros da trigger
         const novoMotorista = await Motorista.create({ id, tipo_veiculo, placa_veiculo });
         return res.status(201).json(novoMotorista);
+        
     } catch (error) {
         console.error("Erro ao criar motorista:", error);
+
+        // Captura o erro da trigger do banco de dados
+        if (error.message.includes("O motorista precisa ser um funcionário válido")) {
+            return res.status(400).json({ error: 'O motorista precisa ser um funcionário válido.' });
+        }
+
         return res.status(500).json({ error: 'Erro ao criar motorista', details: error.message });
     }
 };

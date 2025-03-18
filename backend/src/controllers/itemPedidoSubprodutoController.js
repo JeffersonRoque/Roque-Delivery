@@ -12,11 +12,19 @@ exports.createItemPedidoSubproduto = async (req, res) => {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
         }
 
+        // Criar a relação e capturar possíveis erros da trigger
         const novoItemPedidoSubproduto = await ItensPedidoSubprodutos.create({ item_pedido_id, subproduto_id, quantidade });
 
         return res.status(201).json(novoItemPedidoSubproduto);
+        
     } catch (error) {
         console.error("Erro ao criar item_pedido_subproduto:", error);
+
+        // Captura o erro da trigger do banco de dados
+        if (error.message.includes("O item do pedido informado não existe")) {
+            return res.status(400).json({ error: 'O item do pedido informado não existe! Verifique os dados antes de tentar novamente.' });
+        }
+
         return res.status(500).json({ error: 'Erro ao criar item_pedido_subproduto', details: error.message });
     }
 };

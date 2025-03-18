@@ -22,18 +22,27 @@ exports.createItemPedido = async (req, res) => {
             return res.status(404).json({ error: 'Produto não encontrado' });
         }
 
-        if (produto.estoque < quantidade) {
-            return res.status(400).json({ error: 'Estoque insuficiente para este produto' });
-        }
-
         const preco = preco_unitario * quantidade;
 
-        const novoItemPedido = await ItemPedido.create({ pedido_id, produto_id, quantidade, preco_unitario, preco });
+        try {
+            // Criar item do pedido (trigger impede estoque negativo)
+            const novoItemPedido = await ItemPedido.create({ pedido_id, produto_id, quantidade, preco_unitario, preco });
 
-        // Atualiza o estoque do produto
-        await produto.update({ estoque: produto.estoque - quantidade });
+            // Buscar estoque atualizado após a inserção
+            const produtoAtualizado = await Produto.findByPk(produto_id);
 
-        return res.status(201).json(novoItemPedido);
+            return res.status(201).json({ itemPedido: novoItemPedido, estoque_atualizado: produtoAtualizado.estoque });
+
+        } catch (error) {
+            console.error("Erro ao adicionar item ao pedido:", error);
+
+            // Captura erro da trigger de estoque insuficiente
+            if (error.message.includes("Estoque insuficiente para o produto")) {
+                return res.status(400).json({ error: 'Estoque insuficiente para este produto. Verifique a quantidade disponível antes de tentar novamente.' });
+            }
+
+            return res.status(500).json({ error: 'Erro ao adicionar item ao pedido', details: error.message });
+        }
     } catch (error) {
         console.error("Erro ao adicionar item ao pedido:", error);
         return res.status(500).json({ error: 'Erro ao adicionar item ao pedido', details: error.message });
@@ -145,18 +154,25 @@ exports.updateItemPedido = async (req, res) => {
 
         const diferencaQuantidade = quantidade - itemPedido.quantidade;
 
-        if (produto.estoque < diferencaQuantidade) {
-            return res.status(400).json({ error: 'Estoque insuficiente para esta atualização' });
+        try {
+            // Atualiza o item do pedido
+            const preco = preco_unitario * quantidade;
+            await itemPedido.update({ quantidade, preco_unitario, preco });
+
+            // Buscar estoque atualizado após a alteração
+            const produtoAtualizado = await Produto.findByPk(produto.id);
+
+            res.json({ itemPedido, estoque_atualizado: produtoAtualizado.estoque });
+
+        } catch (error) {
+            console.error("Erro ao atualizar item de pedido:", error);
+
+            if (error.message.includes("Estoque insuficiente para o produto")) {
+                return res.status(400).json({ error: 'Estoque insuficiente para esta atualização. Verifique a quantidade disponível antes de tentar novamente.' });
+            }
+
+            res.status(500).json({ error: 'Erro ao atualizar item de pedido', details: error.message });
         }
-
-        const preco = preco_unitario * quantidade;
-
-        await itemPedido.update({ quantidade, preco_unitario, preco });
-
-        // Atualiza o estoque do produto
-        await produto.update({ estoque: produto.estoque - diferencaQuantidade });
-
-        res.json(itemPedido);
     } catch (error) {
         console.error("Erro ao atualizar item de pedido:", error);
         res.status(500).json({ error: 'Erro ao atualizar item de pedido', details: error.message });
@@ -177,13 +193,19 @@ exports.deleteItemPedido = async (req, res) => {
             return res.status(404).json({ error: 'Item de pedido não encontrado' });
         }
 
-        const produto = await Produto.findByPk(itemPedido.produto_id);
-        if (produto) {
-            await produto.update({ estoque: produto.estoque + itemPedido.quantidade });
-        }
+        try {
+            // Deletar o item do pedido
+            await itemPedido.destroy();
 
-        await itemPedido.destroy();
-        res.status(204).send();
+            // Buscar estoque atualizado após a remoção
+            const produtoAtualizado = await Produto.findByPk(itemPedido.produto_id);
+
+            res.status(204).json({ message: "Item removido com sucesso", estoque_atualizado: produtoAtualizado.estoque });
+
+        } catch (error) {
+            console.error("Erro ao deletar item de pedido:", error);
+            res.status(500).json({ error: 'Erro ao deletar item de pedido', details: error.message });
+        }
     } catch (error) {
         console.error("Erro ao deletar item de pedido:", error);
         res.status(500).json({ error: 'Erro ao deletar item de pedido', details: error.message });
