@@ -20,6 +20,7 @@ class Motorista extends Model {
         sequelize,
         modelName: 'Motorista',
         tableName: 'motoristas',
+        timestamps: false
       }
     );
   }

@@ -6,7 +6,7 @@ exports.create = async (req, res) => {
     try {
         console.log("Recebendo requisição para criar Pessoa Jurídica:", req.body);
 
-        const { nome, email, senha_hash, telefone, endereco, cnpj, razao_social, nome_fantasia, inscricao_estadual, eh_empresa } = req.body;
+        const { nome, email, senha_hash, telefone, endereco, cnpj, razao_social, inscricao_estadual } = req.body;
 
         if (!nome || !email || !senha_hash || !telefone || !endereco || !cnpj || !razao_social) {
             return res.status(400).json({ error: 'Nome, e-mail, senha, telefone, endereço, CNPJ e razão social são obrigatórios' });
@@ -21,7 +21,7 @@ exports.create = async (req, res) => {
 
         // Criar Pessoa e Pessoa Jurídica
         const pessoa = await Pessoa.create({ nome, email, senha_hash, telefone, endereco, tipo_pessoa: 'juridica' });
-        const pessoaJuridica = await PessoaJuridica.create({ id: pessoa.id, cnpj, razao_social, nome_fantasia, inscricao_estadual, eh_empresa });
+        const pessoaJuridica = await PessoaJuridica.create({ id: pessoa.id, cnpj, razao_social, inscricao_estadual });
 
         res.status(201).json({ ...pessoa.toJSON(), ...pessoaJuridica.toJSON() });
     } catch (error) {
@@ -43,7 +43,6 @@ exports.getAll = async (req, res) => {
         if (telefone) wherePessoa.telefone = telefone;
         if (cnpj) wherePessoaJuridica.cnpj = cnpj;
         if (razao_social) wherePessoaJuridica.razao_social = { [Op.iLike]: `%${razao_social}%` };
-        if (nome_fantasia) wherePessoaJuridica.nome_fantasia = { [Op.iLike]: `%${nome_fantasia}%` };
 
         const pessoasJuridicas = await PessoaJuridica.findAll({
             where: wherePessoaJuridica,
@@ -52,7 +51,7 @@ exports.getAll = async (req, res) => {
                 as: 'pessoa',
                 where: wherePessoa
             },
-            order: [['criado_em', ordenacao === 'asc' ? 'ASC' : 'DESC']],
+            order: [['id', ordenacao === 'asc' ? 'ASC' : 'DESC']],
             limit: limite ? parseInt(limite) : null
         });
 
@@ -89,7 +88,7 @@ exports.getById = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nome, email, senha_hash, telefone, endereco, cnpj, razao_social, nome_fantasia, inscricao_estadual, eh_empresa } = req.body;
+        const { nome, email, senha_hash, telefone, endereco, cnpj, razao_social, inscricao_estadual } = req.body;
 
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
@@ -126,7 +125,7 @@ exports.update = async (req, res) => {
 
         // Atualizar os dados
         await pessoaJuridica.pessoa.update({ nome, email, senha_hash, telefone, endereco });
-        await pessoaJuridica.update({ cnpj, razao_social, nome_fantasia, inscricao_estadual, eh_empresa });
+        await pessoaJuridica.update({ cnpj, razao_social, inscricao_estadual });
 
         res.json({ ...pessoaJuridica.pessoa.toJSON(), ...pessoaJuridica.toJSON() });
     } catch (error) {

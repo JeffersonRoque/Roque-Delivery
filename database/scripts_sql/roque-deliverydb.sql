@@ -18,7 +18,7 @@ CREATE TABLE Pessoas (
 CREATE TABLE Pessoa_Fisica (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES Pessoas(id) ON DELETE CASCADE,
 --  pessoa_id UUID UNIQUE NOT NULL REFERENCES Pessoas(id) ON DELETE CASCADE,
-    cpf_hash TEXT UNIQUE NOT NULL,
+    cpf_hash TEXT NOT NULL,
     data_nascimento DATE NOT NULL
 );
 
@@ -28,8 +28,7 @@ CREATE TABLE Pessoa_Juridica (
 --  pessoa_id UUID UNIQUE NOT NULL REFERENCES Pessoas(id) ON DELETE CASCADE,
     cnpj VARCHAR(18) UNIQUE NOT NULL,
     razao_social VARCHAR(255) NOT NULL,
-    nome_fantasia VARCHAR(255),
-    inscricao_estadual VARCHAR(50),
+    inscricao_estadual VARCHAR(50)
 --	eh_empresa BOOLEAN DEFAULT TRUE
 );
 

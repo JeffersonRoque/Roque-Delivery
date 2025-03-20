@@ -6,22 +6,19 @@ exports.create = async (req, res) => {
     try {
         console.log("Recebendo requisição para criar Pessoa Física:", req.body);
 
-        const { nome, email, senha_hash, telefone, endereco, cpf, data_nascimento } = req.body;
+        const { nome, email, senha_hash, telefone, endereco, cpf_hash, data_nascimento } = req.body;
 
-        if (!nome || !email || !senha_hash || !telefone || !endereco || !cpf || !data_nascimento) {
+        if (!nome || !email || !senha_hash || !telefone || !endereco || !cpf_hash || !data_nascimento) {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
         }
 
-        // Verificar se já existe uma pessoa com mesmo e-mail, telefone ou CPF
+        // Verificar se já existe uma pessoa com mesmo e-mail ou telefone
         const pessoaExistente = await Pessoa.findOne({ where: { [Op.or]: [{ email }, { telefone }] } });
         if (pessoaExistente) return res.status(400).json({ error: 'E-mail ou telefone já cadastrado' });
 
-        const cpfExistente = await PessoaFisica.findOne({ where: { cpf } });
-        if (cpfExistente) return res.status(400).json({ error: 'CPF já cadastrado' });
-
         // Criar Pessoa e Pessoa Física
         const pessoa = await Pessoa.create({ nome, email, senha_hash, telefone, endereco, tipo_pessoa: 'fisica' });
-        const pessoaFisica = await PessoaFisica.create({ id: pessoa.id, cpf, data_nascimento });
+        const pessoaFisica = await PessoaFisica.create({ id: pessoa.id, cpf_hash, data_nascimento });
 
         res.status(201).json({ ...pessoa.toJSON(), ...pessoaFisica.toJSON() });
     } catch (error) {
@@ -33,7 +30,7 @@ exports.create = async (req, res) => {
 // 🔹 Buscar Pessoas Físicas com Filtros Dinâmicos
 exports.getAll = async (req, res) => {
     try {
-        const { nome, email, telefone, cpf, data_nascimento, limite, ordenacao } = req.query;
+        const { nome, email, telefone, cpf_hash, data_nascimento, limite, ordenacao } = req.query;
 
         let wherePessoa = {};
         let wherePessoaFisica = {};
@@ -41,7 +38,7 @@ exports.getAll = async (req, res) => {
         if (nome) wherePessoa.nome = { [Op.iLike]: `%${nome}%` };
         if (email) wherePessoa.email = { [Op.iLike]: `%${email}%` };
         if (telefone) wherePessoa.telefone = telefone;
-        if (cpf) wherePessoaFisica.cpf = cpf;
+        if (cpf_hash) wherePessoaFisica.cpf = cpf_hash;
         if (data_nascimento) wherePessoaFisica.data_nascimento = data_nascimento;
 
         const pessoasFisicas = await PessoaFisica.findAll({
@@ -51,7 +48,7 @@ exports.getAll = async (req, res) => {
                 as: 'pessoa',
                 where: wherePessoa
             },
-            order: [['criado_em', ordenacao === 'asc' ? 'ASC' : 'DESC']],
+            order: [['id', ordenacao === 'asc' ? 'ASC' : 'DESC']],
             limit: limite ? parseInt(limite) : null
         });
 
@@ -88,7 +85,7 @@ exports.getById = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nome, email, senha_hash, telefone, endereco, cpf, data_nascimento } = req.body;
+        const { nome, email, senha_hash, telefone, endereco, cpf_hash, data_nascimento } = req.body;
 
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
@@ -99,7 +96,7 @@ exports.update = async (req, res) => {
             return res.status(404).json({ error: 'Pessoa Física não encontrada' });
         }
 
-        // Verificar se o novo e-mail, telefone ou CPF já pertence a outra pessoa
+        // Verificar se o novo e-mail ou telefone já pertence a outra pessoa
         if (email || telefone) {
             const pessoaExistente = await Pessoa.findOne({
                 where: {
@@ -111,20 +108,9 @@ exports.update = async (req, res) => {
             if (pessoaExistente) return res.status(400).json({ error: 'E-mail ou telefone já está em uso por outra pessoa' });
         }
 
-        if (cpf) {
-            const cpfExistente = await PessoaFisica.findOne({
-                where: {
-                    cpf,
-                    id: { [Op.ne]: id }
-                }
-            });
-
-            if (cpfExistente) return res.status(400).json({ error: 'CPF já está em uso por outra pessoa' });
-        }
-
         // Atualizar os dados
         await pessoaFisica.pessoa.update({ nome, email, senha_hash, telefone, endereco });
-        await pessoaFisica.update({ cpf, data_nascimento });
+        await pessoaFisica.update({ cpf_hash, data_nascimento });
 
         res.json({ ...pessoaFisica.pessoa.toJSON(), ...pessoaFisica.toJSON() });
     } catch (error) {

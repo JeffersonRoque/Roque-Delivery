@@ -9,10 +9,9 @@ class PessoaFisica extends Model {
           primaryKey: true,
           references: {model: 'pessoa', key: 'id'}
         },
-        cpf: {
+        cpf_hash: {
           type: DataTypes.STRING,
-          allowNull: false,
-          unique: true
+          allowNull: false
         },
         data_nascimento: {
           type: DataTypes.DATEONLY,
@@ -22,7 +21,8 @@ class PessoaFisica extends Model {
       {
         sequelize,
         modelName: 'PessoaFisica',
-        tableName: 'pessoa_fisica'
+        tableName: 'pessoa_fisica',
+        timestamps: false
       }
     );
   }

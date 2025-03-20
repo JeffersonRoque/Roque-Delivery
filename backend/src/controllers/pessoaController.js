@@ -44,7 +44,7 @@ exports.getPessoas = async (req, res) => {
 
         const pessoas = await Pessoa.findAll({
             where,
-            order: [['criado_em', ordenacao === 'asc' ? 'ASC' : 'DESC']],
+            order: [['id', ordenacao === 'asc' ? 'ASC' : 'DESC']],
             limit: limite ? parseInt(limite) : null
         });
 

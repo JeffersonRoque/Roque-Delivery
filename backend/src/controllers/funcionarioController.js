@@ -6,14 +6,14 @@ exports.createFuncionario = async (req, res) => {
     try {
         console.log("Recebendo requisição para criar funcionário:", req.body);
 
-        const { pessoa_id, empregador_id, cargo } = req.body;
+        const { id, empregador_id, cargo } = req.body;
 
-        if (!pessoa_id || !empregador_id || !cargo) {
+        if (!id || !empregador_id || !cargo) {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
         }
 
         // Verificar se a pessoa física existe
-        const pessoaFisica = await PessoaFisica.findByPk(pessoa_id);
+        const pessoaFisica = await PessoaFisica.findByPk(id);
         if (!pessoaFisica) {
             return res.status(404).json({ error: 'Pessoa Física não encontrada' });
         }
@@ -24,7 +24,7 @@ exports.createFuncionario = async (req, res) => {
             return res.status(404).json({ error: 'Empregador não encontrado' });
         }
 
-        const novoFuncionario = await Funcionario.create({ id: pessoa_id, empregador_id, cargo });
+        const novoFuncionario = await Funcionario.create({ id: id, empregador_id, cargo });
 
         return res.status(201).json(novoFuncionario);
     } catch (error) {

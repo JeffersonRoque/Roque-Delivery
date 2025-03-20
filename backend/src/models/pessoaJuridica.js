@@ -18,9 +18,6 @@ class PessoaJuridica extends Model {
           type: DataTypes.STRING,
           allowNull: false
         },
-        nome_fantasia: {
-          type: DataTypes.STRING
-        },
         inscricao_estadual: {
           type: DataTypes.STRING
         },
@@ -28,7 +25,8 @@ class PessoaJuridica extends Model {
       {
         sequelize,
         modelName: 'PessoaJuridica',
-        tableName: 'pessoa_juridica'
+        tableName: 'pessoa_juridica',
+        timestamps: false
       }
     );
   }
