@@ -86,8 +86,8 @@ CREATE TABLE Pedidos (
 -- Tabela de relação entre produtos e pedidos
 CREATE TABLE Itens_Pedido (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    pedido_id UUID REFERENCES Pedidos(id),
-    produto_id UUID REFERENCES Produtos(id),
+    pedido_id UUID NOT NULL REFERENCES Pedidos(id) ON DELETE CASCADE,,
+    produto_id UUID NOT NULL REFERENCES Produtos(id) ON DELETE CASCADE,,
     quantidade INT NOT NULL,
 	preco_unitario DECIMAL(10,2) NOT NULL, -- Adicionando o preço unitário
     preco DECIMAL(10,2) NOT NULL -- Multiplicação entre preco_unitario * quantidade
@@ -96,11 +96,11 @@ CREATE TABLE Itens_Pedido (
 -- Tabela de relação entre Itens_Pedido e Subprodutos
 CREATE TABLE Itens_Pedido_Subprodutos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    item_pedido_id UUID NOT NULL,
-    subproduto_id UUID NOT NULL,
+    item_pedido_id UUID NOT NULL REFERENCES Itens_Pedido(id) ON DELETE CASCADE,
+    subproduto_id UUID NOT NULL REFERENCES Subprodutos(id) ON DELETE CASCADE,
     quantidade INT NOT NULL CHECK (quantidade > 0),
-    CONSTRAINT fk_item_pedido FOREIGN KEY (item_pedido_id) REFERENCES Itens_Pedido(id) ON DELETE CASCADE,
-    CONSTRAINT fk_subproduto FOREIGN KEY (subproduto_id) REFERENCES Subprodutos(id) ON DELETE CASCADE
+    preco_unitario DECIMAL(10,2) NOT NULL, -- Adicionando o preço unitário
+    preco DECIMAL(10,2) NOT NULL -- Multiplicação entre preco_unitario * quantidade
 );
 
 -- Tabela de entrega dos produtos
@@ -108,7 +108,7 @@ CREATE TABLE Entregas (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     pedido_id UUID REFERENCES Pedidos(id),
     motorista_id UUID REFERENCES Motoristas(id),
-    status VARCHAR(50) CHECK (status IN ('pendente', 'em_transito', 'entregue', 'falhou')),
+    status VARCHAR(50) CHECK (status IN ('pendente', 'em_transito', 'entregue', 'cancelada')),
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -120,7 +120,8 @@ CREATE TABLE Localizacoes (
     motorista_id UUID REFERENCES Motoristas(id),
     latitude DECIMAL(10,6) NOT NULL,
     longitude DECIMAL(10,6) NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    modificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tabela dos pagamentos
@@ -291,14 +292,21 @@ FOR EACH ROW EXECUTE FUNCTION verificar_item_pedido_existente();
 
 -----------------------------------------------------------------------------------------------------------
 -- Criar atualização do Estoque
--- Atualizar estoque do produto ao adicionar ou remover itens do pedido
+-- Atualizar estoque do produto ao adicionar, alterar ou remover itens do pedido
 CREATE OR REPLACE FUNCTION atualizar_estoque_produto()
 RETURNS TRIGGER AS $$
 BEGIN
+    -- Caso um novo item seja inserido no pedido, reduz o estoque
     IF TG_OP = 'INSERT' THEN
         UPDATE Produtos 
         SET estoque = estoque - NEW.quantidade, modificado_em = CURRENT_TIMESTAMP
         WHERE id = NEW.produto_id;
+    -- Caso a quantidade de um item seja alterada (UPDATE)
+    ELSIF TG_OP = 'UPDATE' THEN
+        UPDATE Produtos 
+        SET estoque = estoque + OLD.quantidade - NEW.quantidade, modificado_em = CURRENT_TIMESTAMP
+        WHERE id = NEW.produto_id;
+    -- Caso um item seja removido do pedido, reverte a quantidade no estoque
     ELSIF TG_OP = 'DELETE' THEN
         UPDATE Produtos 
         SET estoque = estoque + OLD.quantidade, modificado_em = CURRENT_TIMESTAMP
@@ -314,7 +322,6 @@ AFTER INSERT OR DELETE ON Itens_Pedido
 FOR EACH ROW EXECUTE FUNCTION atualizar_estoque_produto();
 
 ----------------------------------------------------------------------------------------------------------------
-
 -- Impedir que o estoque fique negativo ao adicionar um item no pedido
 CREATE OR REPLACE FUNCTION impedir_estoque_negativo()
 RETURNS TRIGGER AS $$
@@ -337,6 +344,64 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trigger_impedir_estoque_negativo
 BEFORE INSERT ON Itens_Pedido
 FOR EACH ROW EXECUTE FUNCTION impedir_estoque_negativo();
+
+-----------------------------------------------------------------------------------------------------------
+-- Criar atualização do Estoque
+-- Atualizar estoque do subproduto ao adicionar, alterar ou remover itens do pedido do subproduto
+CREATE OR REPLACE FUNCTION atualizar_estoque_subproduto()
+RETURNS TRIGGER AS $$  
+BEGIN  
+    -- Reduz o estoque ao adicionar um subproduto ao pedido  
+    IF TG_OP = 'INSERT' THEN  
+        UPDATE Subprodutos  
+        SET estoque = estoque - NEW.quantidade, modificado_em = CURRENT_TIMESTAMP  
+        WHERE id = NEW.subproduto_id;  
+
+    -- Se a quantidade for alterada, ajusta o estoque proporcionalmente  
+    ELSIF TG_OP = 'UPDATE' THEN  
+        UPDATE Subprodutos  
+        SET estoque = estoque + OLD.quantidade - NEW.quantidade, modificado_em = CURRENT_TIMESTAMP  
+        WHERE id = NEW.subproduto_id;  
+
+    -- Se o subproduto for removido do pedido, devolve a quantidade ao estoque  
+    ELSIF TG_OP = 'DELETE' THEN  
+        UPDATE Subprodutos  
+        SET estoque = estoque + OLD.quantidade, modificado_em = CURRENT_TIMESTAMP  
+        WHERE id = OLD.subproduto_id;  
+    END IF;  
+
+    RETURN NEW;  
+END;  
+$$ LANGUAGE plpgsql;  
+
+CREATE TRIGGER trigger_atualizar_estoque_subproduto  
+AFTER INSERT OR UPDATE OR DELETE ON Itens_Pedido_Subprodutos  
+FOR EACH ROW EXECUTE FUNCTION atualizar_estoque_subproduto();
+
+----------------------------------------------------------------------------------------------------------------
+-- Impedir que o estoque fique negativo ao adicionar um item no pedido do subproduto
+
+CREATE OR REPLACE FUNCTION impedir_estoque_negativo_subproduto()
+RETURNS TRIGGER AS $$  
+DECLARE  
+    estoque_atual INT;  
+BEGIN  
+    -- Busca o estoque atual do subproduto  
+    SELECT COALESCE(estoque, 0) INTO estoque_atual FROM Subprodutos WHERE id = NEW.subproduto_id;  
+
+    -- Se o estoque for insuficiente, impede a operação  
+    IF estoque_atual < NEW.quantidade THEN  
+        RAISE EXCEPTION 'Estoque insuficiente para o subproduto %: disponível = %, solicitado = %',  
+            NEW.subproduto_id, estoque_atual, NEW.quantidade;  
+    END IF;  
+
+    RETURN NEW;  
+END;  
+$$ LANGUAGE plpgsql;  
+
+CREATE TRIGGER trigger_impedir_estoque_negativo_subproduto  
+BEFORE INSERT OR UPDATE ON Itens_Pedido_Subprodutos  
+FOR EACH ROW EXECUTE FUNCTION impedir_estoque_negativo_subproduto();
 
 ----------------------------------------------------------------------------------------------
 

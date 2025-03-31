@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const itemPedidoSubprodutoController = require('../controllers/itemPedidoSubprodutoController');
 
-// 🔹 Criar um novo item_pedido_subproduto
+// 🔹 Criar uma nova relação entre item do pedido e subproduto
 router.post('/', itemPedidoSubprodutoController.createItemPedidoSubproduto);
 
-// 🔹 Buscar itens_pedido_subprodutos com filtros dinâmicos
+// 🔹 Buscar todas as relações entre Itens de Pedido e Subprodutos com filtros dinâmicos
 router.get('/', itemPedidoSubprodutoController.getItensPedidoSubprodutos);
 
 // 🔹 Buscar um item_pedido_subproduto por ID

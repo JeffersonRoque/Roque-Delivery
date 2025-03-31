@@ -15,6 +15,9 @@ router.get('/:id', entregaController.getEntregaById);
 // 🔹 Atualizar uma entrega
 router.put('/:id', entregaController.updateEntrega);
 
+// 🔹 Atualizar motorista
+router.put('/:id', entregaController.reatribuirMotorista);
+
 // 🔹 Deletar uma entrega
 router.delete('/:id', entregaController.deleteEntrega);
 

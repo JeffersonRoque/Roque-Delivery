@@ -27,12 +27,21 @@ class ItemPedidoSubproduto extends Model {
           validate: {
             min: 1 // Garante que a quantidade seja maior que 0
           }
+        },
+        preco_unitario: {
+          type: DataTypes.DECIMAL(10, 2),
+          allowNull: false
+        },
+        preco: {
+          type: DataTypes.DECIMAL(10, 2),
+          allowNull: false
         }
       },
       {
         sequelize,
         modelName: 'ItemPedidoSubproduto',
-        tableName: 'itens_pedido_subprodutos'
+        tableName: 'itens_pedido_subprodutos',
+        timestamps: false
       }
     );
   }

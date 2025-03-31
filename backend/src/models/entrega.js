@@ -20,7 +20,7 @@ class Entrega extends Model {
           references: { model: 'motorista', key: 'id' }
         },
         status: {
-          type: DataTypes.ENUM('pendente', 'em_transito', 'entregue', 'falhou'),
+          type: DataTypes.ENUM('pendente', 'em_transito', 'entregue', 'cancelada'),
           allowNull: false
         }
       },

@@ -100,6 +100,35 @@ exports.updateEntrega = async (req, res) => {
     }
 };
 
+// 🔹 Alterar o motorista de uma entrega
+exports.reatribuirMotorista = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { motorista_id } = req.body;
+
+        if (!id.match(/^[0-9a-fA-F-]{36}$/) || !motorista_id.match(/^[0-9a-fA-F-]{36}$/)) {
+            return res.status(400).json({ error: 'ID inválido' });
+        }
+
+        const entrega = await Entrega.findByPk(id);
+        if (!entrega) {
+            return res.status(404).json({ error: 'Entrega não encontrada' });
+        }
+
+        const motorista = await Motorista.findByPk(motorista_id);
+        if (!motorista) {
+            return res.status(404).json({ error: 'Motorista não encontrado' });
+        }
+
+        await entrega.update({ motorista_id });
+
+        res.json({ message: 'Motorista reatribuído com sucesso', entrega });
+    } catch (error) {
+        console.error("Erro ao reatribuir motorista:", error);
+        res.status(500).json({ error: 'Erro ao reatribuir motorista', details: error.message });
+    }
+};
+
 // 🔹 Deletar uma entrega
 exports.deleteEntrega = async (req, res) => {
     try {

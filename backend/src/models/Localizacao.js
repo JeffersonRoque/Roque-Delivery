@@ -32,7 +32,9 @@ class Localizacao extends Model {
         sequelize,
         modelName: 'Localizacao',
         tableName: 'localizacoes',
-        timestamps: true
+        timestamps: true,
+        createdAt: 'criado_em',
+        updatedAt: 'modificado_em'
       }
     );
   }

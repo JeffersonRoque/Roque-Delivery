@@ -40,7 +40,8 @@ class ItemPedido extends Model {
       {
         sequelize,
         modelName: 'ItemPedido',
-        tableName: 'itens_pedido'
+        tableName: 'itens_pedido',
+        timestamps: false
       }
     );
   }

@@ -1,4 +1,4 @@
-const { ItensPedidoSubprodutos, ItensPedido, Subproduto, Pedido } = require('../models');
+const { ItemPedidoSubproduto, ItemPedido, Subproduto, Pedido } = require('../models');
 const { Op } = require('sequelize'); // Operadores para filtros dinâmicos
 
 // 🔹 Criar uma nova relação entre item do pedido e subproduto
@@ -12,17 +12,39 @@ exports.createItemPedidoSubproduto = async (req, res) => {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
         }
 
-        // Criar a relação e capturar possíveis erros da trigger
-        const novoItemPedidoSubproduto = await ItensPedidoSubprodutos.create({ item_pedido_id, subproduto_id, quantidade });
+        // Verificar se o subproduto existe
+        const subproduto = await Subproduto.findByPk(subproduto_id);
+        if (!subproduto) {
+            return res.status(404).json({ error: 'Subproduto não encontrado' });
+        }
 
-        return res.status(201).json(novoItemPedidoSubproduto);
-        
+        // Verificar estoque disponível
+        if (subproduto.estoque < quantidade) {
+            return res.status(400).json({
+                error: 'Estoque insuficiente para o subproduto',
+                disponivel: subproduto.estoque,
+                solicitado: quantidade
+            });
+        }
+
+        // Criar o item subproduto
+        const preco_unitario = subproduto.preco;
+        const preco = preco_unitario * quantidade;
+
+        const novoItemPedidoSubproduto = await ItemPedidoSubproduto.create({
+            item_pedido_id,
+            subproduto_id,
+            quantidade,
+            preco_unitario,
+            preco
+        });
+
+        res.status(201).json(novoItemPedidoSubproduto);
     } catch (error) {
         console.error("Erro ao criar item_pedido_subproduto:", error);
 
-        // Captura o erro da trigger do banco de dados
-        if (error.message.includes("O item do pedido informado não existe")) {
-            return res.status(400).json({ error: 'O item do pedido informado não existe! Verifique os dados antes de tentar novamente.' });
+        if (error.message.includes("Estoque insuficiente")) {
+            return res.status(400).json({ error: 'Estoque insuficiente para este subproduto.' });
         }
 
         return res.status(500).json({ error: 'Erro ao criar item_pedido_subproduto', details: error.message });
@@ -39,10 +61,10 @@ exports.getItensPedidoSubprodutos = async (req, res) => {
         if (item_pedido_id) where.item_pedido_id = item_pedido_id;
         if (subproduto_id) where.subproduto_id = subproduto_id;
 
-        const itensPedidoSubprodutos = await ItensPedidoSubprodutos.findAll({
+        const itensPedidoSubprodutos = await ItemPedidoSubproduto.findAll({
             where,
             include: [
-                { model: ItensPedido, as: 'itemPedido', include: [{ model: Pedido, as: 'pedido' }] },
+                { model: ItemPedido, as: 'itemPedido', include: [{ model: Pedido, as: 'pedido' }] },
                 { model: Subproduto, as: 'subproduto' }
             ]
         });
@@ -63,9 +85,9 @@ exports.getItemPedidoSubprodutoById = async (req, res) => {
             return res.status(400).json({ error: 'ID inválido' });
         }
 
-        const itemPedidoSubproduto = await ItensPedidoSubprodutos.findByPk(id, {
+        const itemPedidoSubproduto = await ItemPedidoSubproduto.findByPk(id, {
             include: [
-                { model: ItensPedido, as: 'itemPedido', include: [{ model: Pedido, as: 'pedido' }] },
+                { model: ItemPedido, as: 'itemPedido', include: [{ model: Pedido, as: 'pedido' }] },
                 { model: Subproduto, as: 'subproduto' }
             ]
         });
@@ -73,6 +95,7 @@ exports.getItemPedidoSubprodutoById = async (req, res) => {
         if (!itemPedidoSubproduto) {
             return res.status(404).json({ error: 'Item Pedido Subproduto não encontrado' });
         }
+
         res.json(itemPedidoSubproduto);
     } catch (error) {
         console.error("Erro ao buscar item_pedido_subproduto:", error);
@@ -90,16 +113,45 @@ exports.updateItemPedidoSubproduto = async (req, res) => {
             return res.status(400).json({ error: 'ID inválido' });
         }
 
-        const itemPedidoSubproduto = await ItensPedidoSubprodutos.findByPk(id);
-
+        const itemPedidoSubproduto = await ItemPedidoSubproduto.findByPk(id);
         if (!itemPedidoSubproduto) {
             return res.status(404).json({ error: 'Item Pedido Subproduto não encontrado' });
         }
 
-        await itemPedidoSubproduto.update({ quantidade });
+        const subproduto = await Subproduto.findByPk(itemPedidoSubproduto.subproduto_id);
+        if (!subproduto) {
+            return res.status(404).json({ error: 'Subproduto não encontrado' });
+        }
+
+        // Calcular diferença de quantidade
+        const diferencaQuantidade = quantidade - itemPedidoSubproduto.quantidade;
+
+        // Verificar estoque
+        if (diferencaQuantidade > 0 && subproduto.estoque < diferencaQuantidade) {
+            return res.status(400).json({
+                error: 'Estoque insuficiente para o subproduto',
+                disponivel: subproduto.estoque,
+                solicitado: diferencaQuantidade
+            });
+        }
+
+        // Atualizar estoque do subproduto
+        await subproduto.update({ estoque: subproduto.estoque - diferencaQuantidade });
+
+        // Atualizar preço total do item
+        const preco_unitario = subproduto.preco;
+        const preco = preco_unitario * quantidade;
+
+        await itemPedidoSubproduto.update({ quantidade, preco_unitario, preco });
+
         res.json(itemPedidoSubproduto);
     } catch (error) {
         console.error("Erro ao atualizar item_pedido_subproduto:", error);
+
+        if (error.message.includes("violates check constraint")) {
+            return res.status(400).json({ error: 'A nova quantidade do subproduto não é permitida.' });
+        }
+
         res.status(500).json({ error: 'Erro ao atualizar item_pedido_subproduto', details: error.message });
     }
 };
@@ -113,10 +165,15 @@ exports.deleteItemPedidoSubproduto = async (req, res) => {
             return res.status(400).json({ error: 'ID inválido' });
         }
 
-        const itemPedidoSubproduto = await ItensPedidoSubprodutos.findByPk(id);
-
+        const itemPedidoSubproduto = await ItemPedidoSubproduto.findByPk(id);
         if (!itemPedidoSubproduto) {
             return res.status(404).json({ error: 'Item Pedido Subproduto não encontrado' });
+        }
+
+        // Devolver o estoque do subproduto antes de deletar
+        const subproduto = await Subproduto.findByPk(itemPedidoSubproduto.subproduto_id);
+        if (subproduto) {
+            await subproduto.update({ estoque: subproduto.estoque + itemPedidoSubproduto.quantidade });
         }
 
         await itemPedidoSubproduto.destroy();
