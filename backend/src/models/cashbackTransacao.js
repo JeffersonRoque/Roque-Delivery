@@ -15,10 +15,10 @@ class CashbackTransacao extends Model {
           references: { model: 'pessoa', key: 'id' },
           onDelete: 'CASCADE' 
         },
-        produto_id: {
+        pedido_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: 'produto', key: 'id' },
+          references: { model: 'pedido', key: 'id' },
           onDelete: 'SET NULL' 
         },
         valor: {

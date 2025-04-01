@@ -35,7 +35,8 @@ class CupomPessoa extends Model {
         modelName: 'CupomPessoa',
         tableName: 'cupons_pessoas',
         timestamps: true,
-        createdAt: 'criado_em'
+        createdAt: 'criado_em',
+        updatedAt: 'usado_em'
       }
     );
   }

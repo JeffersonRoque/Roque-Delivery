@@ -29,7 +29,7 @@ app.use(express.json());
 
 app.use('/audiLogs', auditLog);
 app.use('/avaliacoes', avaliacaoRoutes);
-app.use('/cashbacks', cashbackRoutes);
+app.use('/cashback', cashbackRoutes);
 app.use('/cashbackProdutos', cashbackProduto)
 app.use('/casbachTransacoes', cashbackTransacao);
 app.use('/cupons', cupomRoutes);

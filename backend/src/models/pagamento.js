@@ -19,12 +19,8 @@ class Pagamento extends Model {
           allowNull: false
         },
         status: {
-          type: DataTypes.ENUM('pendente', 'concluido', 'falhou'),
+          type: DataTypes.ENUM('pendente', 'concluido', 'cancelado'),
           allowNull: false
-        },
-        transacao_id: {
-          type: DataTypes.STRING(100),
-          allowNull: true // Pode ser nulo para pagamentos em dinheiro
         },
         valor_pago: {
           type: DataTypes.DECIMAL(10, 2),

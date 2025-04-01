@@ -6,13 +6,13 @@ exports.createPagamento = async (req, res) => {
     try {
         console.log("Recebendo requisição para criar pagamento:", req.body);
 
-        const { pedido_id, metodo_pagamento, status, transacao_id, valor_pago } = req.body;
+        const { pedido_id, metodo_pagamento, status, valor_pago } = req.body;
 
         if (!pedido_id || !metodo_pagamento || !status || valor_pago === undefined) {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
         }
 
-        const novoPagamento = await Pagamento.create({ pedido_id, metodo_pagamento, status, transacao_id, valor_pago });
+        const novoPagamento = await Pagamento.create({ pedido_id, metodo_pagamento, status, valor_pago });
 
         return res.status(201).json(novoPagamento);
     } catch (error) {
@@ -75,7 +75,7 @@ exports.getPagamentoById = async (req, res) => {
 exports.updatePagamento = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, transacao_id, valor_pago } = req.body;
+        const { status, metodo_pagamento, valor_pago } = req.body;
 
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
@@ -86,7 +86,7 @@ exports.updatePagamento = async (req, res) => {
             return res.status(404).json({ error: 'Pagamento não encontrado' });
         }
 
-        await pagamento.update({ status, transacao_id, valor_pago });
+        await pagamento.update({ status, metodo_pagamento, valor_pago });
         res.json(pagamento);
     } catch (error) {
         console.error("Erro ao atualizar pagamento:", error);

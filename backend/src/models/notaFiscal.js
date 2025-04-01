@@ -36,7 +36,7 @@ class NotaFiscal extends Model {
         modelName: 'NotaFiscal',
         tableName: 'notas_fiscais',
         timestamps: true, 
-        createdAt: 'criado_em',
+        createdAt: 'emitido_em',
         updatedAt: 'modificado_em'
       }
     );

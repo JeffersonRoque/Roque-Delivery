@@ -5,16 +5,15 @@ const { Op } = require('sequelize'); // Operadores para consultas
 exports.createCashbackProduto = async (req, res) => {
     try {
         console.log("Recebendo requisição para criar Cashback de Produto:", req.body);
-        const { produto_id, percentual_cashback, valor_fixo_cashback, ativo } = req.body;
+        const { produto_id, percentual_cashback, ativo } = req.body;
 
-        if (!produto_id || (percentual_cashback === undefined && valor_fixo_cashback === undefined)) {
-            return res.status(400).json({ error: 'Produto e pelo menos um tipo de cashback são obrigatórios' });
+        if (!produto_id || percentual_cashback === undefined) {
+            return res.status(400).json({ error: 'Produto e percentual de cashback são obrigatórios' });
         }
 
         const novoCashback = await CashbackProduto.create({
             produto_id,
             percentual_cashback,
-            valor_fixo_cashback,
             ativo
         });
 
@@ -28,14 +27,12 @@ exports.createCashbackProduto = async (req, res) => {
 // 🔹 Buscar todos os Cashbacks de Produtos com filtros dinâmicos
 exports.getAllCashbackProdutos = async (req, res) => {
     try {
-        const { ativo, min_percentual, max_percentual, min_valor, max_valor } = req.query;
+        const { ativo, min_percentual, max_percentual } = req.query;
         
         const where = {};
         if (ativo !== undefined) where.ativo = ativo === 'true';
         if (min_percentual) where.percentual_cashback = { [Op.gte]: min_percentual };
         if (max_percentual) where.percentual_cashback = { ...where.percentual_cashback, [Op.lte]: max_percentual };
-        if (min_valor) where.valor_fixo_cashback = { [Op.gte]: min_valor };
-        if (max_valor) where.valor_fixo_cashback = { ...where.valor_fixo_cashback, [Op.lte]: max_valor };
 
         const cashbacks = await CashbackProduto.findAll({ where });
         res.json(cashbacks);
@@ -68,6 +65,8 @@ exports.getCashbackProdutoById = async (req, res) => {
 exports.updateCashbackProduto = async (req, res) => {
     try {
         const { id } = req.params;
+        const { percentual_cashback, ativo } = req.body;
+
         if (!id.match(/^[0-9a-fA-F-]{36}$/)) {
             return res.status(400).json({ error: 'ID inválido' });
         }
@@ -77,7 +76,11 @@ exports.updateCashbackProduto = async (req, res) => {
             return res.status(404).json({ error: 'Cashback de Produto não encontrado' });
         }
 
-        await cashback.update(req.body);
+        await cashback.update({ 
+            percentual_cashback,
+            ativo: ativo !== undefined ? ativo : cashback.ativo // Mantém o valor atual se não for enviado
+        });
+
         res.json(cashback);
     } catch (error) {
         console.error("Erro ao atualizar Cashback de Produto:", error);

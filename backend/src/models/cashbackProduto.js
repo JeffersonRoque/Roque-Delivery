@@ -22,13 +22,6 @@ class CashbackProduto extends Model {
             min: 0
           }
         },
-        valor_fixo_cashback: {
-          type: DataTypes.DECIMAL(10, 2),
-          allowNull: true,
-          validate: {
-            min: 0
-          }
-        },
         ativo: {
           type: DataTypes.BOOLEAN,
           defaultValue: true

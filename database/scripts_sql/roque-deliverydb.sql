@@ -129,8 +129,7 @@ CREATE TABLE Pagamentos (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     pedido_id UUID REFERENCES Pedidos(id),
     metodo_pagamento VARCHAR(50) CHECK (metodo_pagamento IN ('cartao_credito', 'cartao_debito', 'pix', 'dinheiro')),
-    status VARCHAR(50) CHECK (status IN ('pendente', 'concluido', 'falhou')),
-    transacao_id VARCHAR(100),
+    status VARCHAR(50) CHECK (status IN ('pendente', 'concluido', 'cancelado')),
 	valor_pago DECIMAL(10,2),
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modificado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -196,7 +195,7 @@ CREATE TABLE Cashback_Produtos (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     produto_id UUID REFERENCES Produtos(id) ON DELETE CASCADE,
     percentual_cashback DECIMAL(5,2) CHECK (percentual_cashback >= 0),
-    valor_fixo_cashback DECIMAL(10,2) CHECK (valor_fixo_cashback >= 0),
+--  valor_fixo_cashback DECIMAL(10,2) CHECK (valor_fixo_cashback >= 0),
     ativo BOOLEAN DEFAULT TRUE,
 	criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
