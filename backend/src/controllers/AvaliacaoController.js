@@ -39,7 +39,7 @@ exports.getAllAvaliacoes = async (req, res) => {
         const avaliacoes = await Avaliacao.findAll({
             where: filters,
             include: [
-                { model: Pessoa, as: 'pessoa' },
+                { model: Pessoa, as: 'cliente' },
                 { model: Motorista, as: 'motorista' }
             ]
         });
@@ -57,7 +57,7 @@ exports.getAvaliacaoById = async (req, res) => {
 
         const avaliacao = await Avaliacao.findByPk(id, {
             include: [
-                { model: Pessoa, as: 'pessoa' },
+                { model: Pessoa, as: 'cliente' },
                 { model: Motorista, as: 'motorista' }
             ]
         });

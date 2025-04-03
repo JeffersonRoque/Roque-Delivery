@@ -86,8 +86,8 @@ CREATE TABLE Pedidos (
 -- Tabela de relação entre produtos e pedidos
 CREATE TABLE Itens_Pedido (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    pedido_id UUID NOT NULL REFERENCES Pedidos(id) ON DELETE CASCADE,,
-    produto_id UUID NOT NULL REFERENCES Produtos(id) ON DELETE CASCADE,,
+    pedido_id UUID NOT NULL REFERENCES Pedidos(id) ON DELETE CASCADE,
+    produto_id UUID NOT NULL REFERENCES Produtos(id) ON DELETE CASCADE,
     quantidade INT NOT NULL,
 	preco_unitario DECIMAL(10,2) NOT NULL, -- Adicionando o preço unitário
     preco DECIMAL(10,2) NOT NULL -- Multiplicação entre preco_unitario * quantidade

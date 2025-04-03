@@ -3,18 +3,18 @@ const router = express.Router();
 const relatorioController = require('../controllers/relatorioController');
 
 // 🔹 Criar um novo relatório
-router.post('/relatorios', relatorioController.createRelatorio);
+router.post('/', relatorioController.createRelatorio);
 
 // 🔹 Buscar todos os relatórios com filtros dinâmicos
-router.get('/relatorios', relatorioController.getAllRelatorios);
+router.get('/', relatorioController.getAllRelatorios);
 
 // 🔹 Buscar um relatório por ID
-router.get('/relatorios/:id', relatorioController.getRelatorioById);
+router.get('/:id', relatorioController.getRelatorioById);
 
 // 🔹 Atualizar um relatório
-router.put('/relatorios/:id', relatorioController.updateRelatorio);
+router.put('/:id', relatorioController.updateRelatorio);
 
 // 🔹 Deletar um relatório
-router.delete('/relatorios/:id', relatorioController.deleteRelatorio);
+router.delete('/:id', relatorioController.deleteRelatorio);
 
 module.exports = router;

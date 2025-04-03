@@ -45,7 +45,7 @@ class AuditLog extends Model {
         tableName: 'audit_logs',
         timestamps: true,
         createdAt: 'criado_em',
-        updatedAt: 'modificado_em'
+        updatedAt: 'alterado_em'
       }
     );
   }

@@ -27,11 +27,11 @@ const app = express();
 
 app.use(express.json());
 
-app.use('/audiLogs', auditLog);
+app.use('/audit-logs', auditLog);
 app.use('/avaliacoes', avaliacaoRoutes);
 app.use('/cashback', cashbackRoutes);
-app.use('/cashbackProdutos', cashbackProduto)
-app.use('/casbachTransacoes', cashbackTransacao);
+app.use('/cashback-produtos', cashbackProduto)
+app.use('/cashbach-transacoes', cashbackTransacao);
 app.use('/cupons', cupomRoutes);
 app.use('/cupons-pessoas', cupomPessoaRoutes);
 app.use('/entregas', entregaRoutes);
