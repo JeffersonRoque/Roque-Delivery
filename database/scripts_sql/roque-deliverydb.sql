@@ -72,6 +72,14 @@ CREATE TABLE Subprodutos (
     modificado_em TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE Produto_Subproduto (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    produto_id UUID NOT NULL REFERENCES Produtos(id) ON DELETE CASCADE,
+    subproduto_id UUID NOT NULL REFERENCES Subprodutos(id) ON DELETE CASCADE,
+    obrigatorio BOOLEAN DEFAULT FALSE,
+    ativo BOOLEAN DEFAULT FALSE
+);
+
 -- Tabela para pedidos
 CREATE TABLE Pedidos (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

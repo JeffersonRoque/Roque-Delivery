@@ -40,6 +40,8 @@ module.exports = {
     await queryInterface.bulkInsert('pessoas', [pessoaJuridica]);
     await queryInterface.bulkInsert('pessoa_juridica', [pessoaJuridicaInfo]);
 
+    await queryInterface.bulkDelete('pessoas', null, {});
+
     // 🔹 Criando 50 pessoas físicas (algumas serão funcionários e motoristas)
     for (let i = 0; i < 50; i++) {
       const idPessoaFisica = uuidv4();
