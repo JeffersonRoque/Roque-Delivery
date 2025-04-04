@@ -36,6 +36,7 @@ const Pessoa = require('./pessoa.js');
 const PessoaFisica = require('./pessoaFisica.js');
 const PessoaJuridica = require('./pessoaJuridica.js');
 const Produto = require('./produto.js');
+const ProdutoSubproduto = require('./produtoSubproduto.js');
 const Relatorio = require('./relatorio.js');
 const Subproduto = require('./subproduto.js');
 
@@ -60,6 +61,7 @@ Pessoa.init(sequelize);
 PessoaFisica.init(sequelize);
 PessoaJuridica.init(sequelize);
 Produto.init(sequelize);
+ProdutoSubproduto.init(sequelize);
 Relatorio.init(sequelize);
 Subproduto.init(sequelize);
 
@@ -79,6 +81,7 @@ Motorista.associate?.(sequelize.models);
 NotaFiscal.associate?.(sequelize.models);
 Pagamento.associate?.(sequelize.models);
 Pedido.associate?.(sequelize.models);
+ProdutoSubproduto.associate?.(sequelize.models);
 PessoaFisica.associate?.(sequelize.models);
 PessoaJuridica.associate?.(sequelize.models);
 

@@ -77,7 +77,9 @@ CREATE TABLE Produto_Subproduto (
     produto_id UUID NOT NULL REFERENCES Produtos(id) ON DELETE CASCADE,
     subproduto_id UUID NOT NULL REFERENCES Subprodutos(id) ON DELETE CASCADE,
     obrigatorio BOOLEAN DEFAULT FALSE,
-    ativo BOOLEAN DEFAULT FALSE
+    ativo BOOLEAN DEFAULT FALSE,
+    criado_em TIMESTAMP DEFAULT NOW(),
+    modificado_em TIMESTAMP DEFAULT NOW()
 );
 
 -- Tabela para pedidos

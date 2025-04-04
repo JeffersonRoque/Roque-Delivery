@@ -20,6 +20,7 @@ const pessoaFisicaRoutes = require('./routes/pessoaFisicaRoutes');
 const pessoaJuridicaRoutes = require('./routes/pessoaJuridicaRoutes');
 const pedidoRoutes = require('./routes/pedidoRoutes');
 const produtoRoutes = require('./routes/produtoRoutes');
+const produtoSubprodutoRoutes = require('./routes/produtoSubprodutoRoutes');
 const relatorioRoutes = require('./routes/relatorioRoutes');
 const subprodutoRoutes = require('./routes/subprodutoRoutes');
 
@@ -47,6 +48,7 @@ app.use('/pessoas-fisica', pessoaFisicaRoutes);
 app.use('/pessoas-juridica', pessoaJuridicaRoutes);
 app.use('/pedidos', pedidoRoutes);
 app.use('/produtos', produtoRoutes);
+app.use('/produtos-subprodutos', produtoSubprodutoRoutes);
 app.use('/relatorios', relatorioRoutes);
 app.use('/subprodutos', subprodutoRoutes);
 
