@@ -1,4 +1,5 @@
 const { Model, DataTypes } = require('sequelize');
+const { hashValue } = require('../uteis/cryptoUtil');
 
 class PessoaFisica extends Model {
   static init(sequelize) {
@@ -11,7 +12,10 @@ class PessoaFisica extends Model {
         },
         cpf_hash: {
           type: DataTypes.STRING,
-          allowNull: false
+          allowNull: false,
+          set(value) {
+            this.setDataValue('cpf_hash', hashValue(value));
+          }
         },
         data_nascimento: {
           type: DataTypes.DATEONLY,

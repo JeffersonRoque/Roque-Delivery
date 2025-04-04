@@ -17,7 +17,6 @@ CREATE TABLE Pessoas (
 -- Tabela para cadastro de pessoas fisicas
 CREATE TABLE Pessoa_Fisica (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES Pessoas(id) ON DELETE CASCADE,
---  pessoa_id UUID UNIQUE NOT NULL REFERENCES Pessoas(id) ON DELETE CASCADE,
     cpf_hash TEXT NOT NULL,
     data_nascimento DATE NOT NULL
 );
@@ -25,17 +24,14 @@ CREATE TABLE Pessoa_Fisica (
 -- Tabela para cadastro de empresas
 CREATE TABLE Pessoa_Juridica (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES Pessoas(id) ON DELETE CASCADE,
---  pessoa_id UUID UNIQUE NOT NULL REFERENCES Pessoas(id) ON DELETE CASCADE,
     cnpj VARCHAR(18) UNIQUE NOT NULL,
     razao_social VARCHAR(255) NOT NULL,
     inscricao_estadual VARCHAR(50)
---	eh_empresa BOOLEAN DEFAULT TRUE
 );
 
 -- Tabela para cadastro de funcionários
 CREATE TABLE Funcionarios (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES Pessoa_Fisica(id) ON DELETE CASCADE, -- Agora refere-se diretamente a Pessoas
---  empregado_id UUID NOT NULL REFERENCES Pessoa_Fisica(id) ON DELETE CASCADE, -- Agora refere-se diretamente a Pessoas
     empregador_id UUID NOT NULL REFERENCES Pessoas(id) ON DELETE CASCADE, -- Pode ser tanto PF quanto PJ
     cargo VARCHAR(100) NOT NULL -- Ex: Gerente, Operador, Supervisor
 );
@@ -43,7 +39,8 @@ CREATE TABLE Funcionarios (
 -- Tabela para cadastro de motoristas
 CREATE TABLE Motoristas (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() REFERENCES funcionarios(id) ON DELETE CASCADE,
---  funcionarios_id UUID UNIQUE NOT NULL REFERENCES funcionarios(id) ON DELETE CASCADE,
+    cnh_hash TEXT NOT NULL,
+    validade_cnh DATE NOT NULL,
     tipo_veiculo VARCHAR(50),
     placa_veiculo VARCHAR(20)
 );

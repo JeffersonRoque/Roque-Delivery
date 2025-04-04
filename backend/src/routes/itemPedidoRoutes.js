@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const itemPedidoController = require('../controllers/itemPedidoController');
+const verificarIdadeCompra = require('../middlewares/verificarIdadeCompra');
 
 // 🔹 Criar um novo item de pedido
-router.post('/', itemPedidoController.createItemPedido);
+router.post('/', verificarIdadeCompra, itemPedidoController.createItemPedido);
 
 // 🔹 Buscar itens de pedidos com filtros dinâmicos
 router.get('/', itemPedidoController.getItensPedidos);

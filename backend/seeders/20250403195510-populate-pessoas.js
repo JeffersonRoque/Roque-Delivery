@@ -36,11 +36,8 @@ module.exports = {
       inscricao_estadual: faker.string.alphanumeric(12),
     };
 
-    pessoas.push(pessoaJuridica);
     await queryInterface.bulkInsert('pessoas', [pessoaJuridica]);
     await queryInterface.bulkInsert('pessoa_juridica', [pessoaJuridicaInfo]);
-
-    await queryInterface.bulkDelete('pessoas', null, {});
 
     // 🔹 Criando 50 pessoas físicas (algumas serão funcionários e motoristas)
     for (let i = 0; i < 50; i++) {
@@ -74,7 +71,9 @@ module.exports = {
 
         if (Math.random() > 0.5) { // 🔹 50% dos funcionários serão motoristas
           motoristas.push({
-            id: idPessoaFisica,      
+            id: idPessoaFisica,
+            cnh_hash: faker.string.numeric(11), // simulando a CNH (ou use hash manual se preferir)
+            validade_cnh: faker.date.future({ years: 5 }), // data futura      
             tipo_veiculo: faker.vehicle.type(),
             placa_veiculo: gerarPlaca(),
           });
