@@ -9,10 +9,10 @@ class CashbackProduto extends Model {
           defaultValue: DataTypes.UUIDV4,
           primaryKey: true
         },
-        produto_id: {
+        empresa_produto_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: 'produto', key: 'id' },
+          references: { model: 'empresaProduto', key: 'id' },
           onDelete: 'CASCADE' 
         },
         percentual_cashback: {
@@ -39,7 +39,7 @@ class CashbackProduto extends Model {
   }
 
   static associate(models) {
-    this.belongsTo(models.Produto, { foreignKey: 'produto_id', as: 'produto', onDelete: 'CASCADE' });
+    this.belongsTo(models.EmpresaProduto, { foreignKey: 'empresa_produto_id', as: 'produto', onDelete: 'CASCADE' });
   }
 }
 

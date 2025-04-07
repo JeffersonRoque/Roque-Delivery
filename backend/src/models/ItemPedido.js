@@ -15,10 +15,10 @@ class ItemPedido extends Model {
           references: { model: 'pedido', key: 'id' },
           onDelete: 'CASCADE' 
         },
-        produto_id: {
+        empresa_produto_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: 'produto', key: 'id' },
+          references: { model: 'empresaProduto', key: 'id' },
           onDelete: 'CASCADE' 
         },
         quantidade: {
@@ -32,7 +32,7 @@ class ItemPedido extends Model {
           type: DataTypes.DECIMAL(10, 2),
           allowNull: false
         },
-        preco: {
+        subtotal: {
           type: DataTypes.DECIMAL(10, 2),
           allowNull: false
         }
@@ -48,7 +48,7 @@ class ItemPedido extends Model {
 
   static associate(models) {
     this.belongsTo(models.Pedido, { foreignKey: 'pedido_id', as: 'pedido', onDelete: 'CASCADE' });
-    this.belongsTo(models.Produto, { foreignKey: 'produto_id', as: 'produto', onDelete: 'CASCADE' });
+    this.belongsTo(models.EmpresaProduto, { foreignKey: 'empresa_produto_id', as: 'produto', onDelete: 'CASCADE' });
   }
 }
 

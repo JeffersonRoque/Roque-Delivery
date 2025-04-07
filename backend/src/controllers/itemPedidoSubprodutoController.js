@@ -1,71 +1,63 @@
-const { ItemPedidoSubproduto, ItemPedido, Subproduto, Pedido } = require('../models');
-const { Op } = require('sequelize'); // Operadores para filtros dinâmicos
+const { ItemPedidoSubproduto, ItemPedido, Pedido, empresaSubproduto } = require('../models');
+const { Op } = require('sequelize');
 
 // 🔹 Criar uma nova relação entre item do pedido e subproduto
 exports.createItemPedidoSubproduto = async (req, res) => {
     try {
         console.log("Recebendo requisição para criar item_pedido_subproduto:", req.body);
 
-        const { item_pedido_id, subproduto_id, quantidade } = req.body;
+        const { item_pedido_id, empresa_subproduto_id, quantidade } = req.body;
 
-        if (!item_pedido_id || !subproduto_id || !quantidade) {
+        if (!item_pedido_id || !empresa_subproduto_id || !quantidade) {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
         }
 
-        // Verificar se o subproduto existe
-        const subproduto = await Subproduto.findByPk(subproduto_id);
-        if (!subproduto) {
-            return res.status(404).json({ error: 'Subproduto não encontrado' });
+        const empresaSubprodutoEncontrado = await empresaSubproduto.findByPk(empresa_subproduto_id);
+        if (!empresaSubprodutoEncontrado) {
+            return res.status(404).json({ error: 'EmpresaSubproduto não encontrado' });
         }
 
-        // Verificar estoque disponível
-        if (subproduto.estoque < quantidade) {
+        if (empresaSubprodutoEncontrado.estoque < quantidade) {
             return res.status(400).json({
-                error: 'Estoque insuficiente para o subproduto',
-                disponivel: subproduto.estoque,
+                error: 'Estoque insuficiente para o subproduto da empresa',
+                disponivel: empresaSubprodutoEncontrado.estoque,
                 solicitado: quantidade
             });
         }
 
-        // Criar o item subproduto
-        const preco_unitario = subproduto.preco;
-        const preco = preco_unitario * quantidade;
+        const preco_unitario = empresaSubprodutoEncontrado.preco;
+        const subtotal = preco_unitario * quantidade;
 
         const novoItemPedidoSubproduto = await ItemPedidoSubproduto.create({
             item_pedido_id,
-            subproduto_id,
+            empresa_subproduto_id,
             quantidade,
             preco_unitario,
-            preco
+            subtotal
         });
 
         res.status(201).json(novoItemPedidoSubproduto);
     } catch (error) {
         console.error("Erro ao criar item_pedido_subproduto:", error);
-
-        if (error.message.includes("Estoque insuficiente")) {
-            return res.status(400).json({ error: 'Estoque insuficiente para este subproduto.' });
-        }
-
         return res.status(500).json({ error: 'Erro ao criar item_pedido_subproduto', details: error.message });
     }
 };
 
-// 🔹 Buscar relações entre Itens de Pedido e Subprodutos com Filtros Dinâmicos
+// 🔹 Buscar relações com Filtros Dinâmicos
 exports.getItensPedidoSubprodutos = async (req, res) => {
     try {
-        const { pedido_id, item_pedido_id, subproduto_id } = req.query;
+        const { pedido_id, item_pedido_id, empresa_subproduto_id } = req.query;
 
         let where = {};
         if (pedido_id) where['$itemPedido.pedido_id$'] = pedido_id;
         if (item_pedido_id) where.item_pedido_id = item_pedido_id;
-        if (subproduto_id) where.subproduto_id = subproduto_id;
+        if (empresa_subproduto_id) where.empresa_subproduto_id = empresa_subproduto_id;
 
         const itensPedidoSubprodutos = await ItemPedidoSubproduto.findAll({
             where,
             include: [
                 { model: ItemPedido, as: 'itemPedido', include: [{ model: Pedido, as: 'pedido' }] },
-                { model: Subproduto, as: 'subproduto' }
+                { model: empresaSubproduto, as: 'empresaSubproduto' }
             ]
         });
 
@@ -76,7 +68,7 @@ exports.getItensPedidoSubprodutos = async (req, res) => {
     }
 };
 
-// 🔹 Buscar um item_pedido_subproduto por ID
+// 🔹 Buscar por ID
 exports.getItemPedidoSubprodutoById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -88,7 +80,7 @@ exports.getItemPedidoSubprodutoById = async (req, res) => {
         const itemPedidoSubproduto = await ItemPedidoSubproduto.findByPk(id, {
             include: [
                 { model: ItemPedido, as: 'itemPedido', include: [{ model: Pedido, as: 'pedido' }] },
-                { model: Subproduto, as: 'subproduto' }
+                { model: empresaSubproduto, as: 'empresaSubproduto' }
             ]
         });
 
@@ -103,7 +95,7 @@ exports.getItemPedidoSubprodutoById = async (req, res) => {
     }
 };
 
-// 🔹 Atualizar um item_pedido_subproduto
+// 🔹 Atualizar item
 exports.updateItemPedidoSubproduto = async (req, res) => {
     try {
         const { id } = req.params;
@@ -118,45 +110,38 @@ exports.updateItemPedidoSubproduto = async (req, res) => {
             return res.status(404).json({ error: 'Item Pedido Subproduto não encontrado' });
         }
 
-        const subproduto = await Subproduto.findByPk(itemPedidoSubproduto.subproduto_id);
-        if (!subproduto) {
-            return res.status(404).json({ error: 'Subproduto não encontrado' });
+        const empresaSubprodutoEncontrado = await empresaSubproduto.findByPk(itemPedidoSubproduto.empresa_subproduto_id);
+        if (!empresaSubprodutoEncontrado) {
+            return res.status(404).json({ error: 'EmpresaSubproduto não encontrado' });
         }
 
-        // Calcular diferença de quantidade
         const diferencaQuantidade = quantidade - itemPedidoSubproduto.quantidade;
 
-        // Verificar estoque
-        if (diferencaQuantidade > 0 && subproduto.estoque < diferencaQuantidade) {
+        if (diferencaQuantidade > 0 && empresaSubprodutoEncontrado.estoque < diferencaQuantidade) {
             return res.status(400).json({
-                error: 'Estoque insuficiente para o subproduto',
-                disponivel: subproduto.estoque,
+                error: 'Estoque insuficiente para o subproduto da empresa',
+                disponivel: empresaSubprodutoEncontrado.estoque,
                 solicitado: diferencaQuantidade
             });
         }
 
-        // Atualizar estoque do subproduto
-        await subproduto.update({ estoque: subproduto.estoque - diferencaQuantidade });
+        await empresaSubprodutoEncontrado.update({
+            estoque: empresaSubprodutoEncontrado.estoque - diferencaQuantidade
+        });
 
-        // Atualizar preço total do item
-        const preco_unitario = subproduto.preco;
-        const preco = preco_unitario * quantidade;
+        const preco_unitario = empresaSubprodutoEncontrado.preco;
+        const subtotal = preco_unitario * quantidade;
 
-        await itemPedidoSubproduto.update({ quantidade, preco_unitario, preco });
+        await itemPedidoSubproduto.update({ quantidade, preco_unitario, subtotal });
 
         res.json(itemPedidoSubproduto);
     } catch (error) {
         console.error("Erro ao atualizar item_pedido_subproduto:", error);
-
-        if (error.message.includes("violates check constraint")) {
-            return res.status(400).json({ error: 'A nova quantidade do subproduto não é permitida.' });
-        }
-
         res.status(500).json({ error: 'Erro ao atualizar item_pedido_subproduto', details: error.message });
     }
 };
 
-// 🔹 Deletar um item_pedido_subproduto
+// 🔹 Deletar item
 exports.deleteItemPedidoSubproduto = async (req, res) => {
     try {
         const { id } = req.params;
@@ -170,10 +155,11 @@ exports.deleteItemPedidoSubproduto = async (req, res) => {
             return res.status(404).json({ error: 'Item Pedido Subproduto não encontrado' });
         }
 
-        // Devolver o estoque do subproduto antes de deletar
-        const subproduto = await Subproduto.findByPk(itemPedidoSubproduto.subproduto_id);
-        if (subproduto) {
-            await subproduto.update({ estoque: subproduto.estoque + itemPedidoSubproduto.quantidade });
+        const empresaSubprodutoEncontrado = await empresaSubproduto.findByPk(itemPedidoSubproduto.empresa_subproduto_id);
+        if (empresaSubprodutoEncontrado) {
+            await empresaSubprodutoEncontrado.update({
+                estoque: empresaSubprodutoEncontrado.estoque + itemPedidoSubproduto.quantidade
+            });
         }
 
         await itemPedidoSubproduto.destroy();

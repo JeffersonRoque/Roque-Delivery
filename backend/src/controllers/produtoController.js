@@ -6,10 +6,10 @@ exports.createProduto = async (req, res) => {
     try {
         console.log("Recebendo requisição para criar produto:", req.body);
 
-        const { nome, descricao, preco, estoque, categorias, eh_alcoolico } = req.body;
+        const { nome, descricao, categorias, eh_alcoolico } = req.body;
 
-        if (!nome || !preco || estoque === undefined) {
-            return res.status(400).json({ error: 'Nome, preço e estoque são obrigatórios' });
+        if (!nome) {
+            return res.status(400).json({ error: 'Nome é obrigatório' });
         }
 
         // Verificar se já existe um produto com o mesmo nome
@@ -18,7 +18,7 @@ exports.createProduto = async (req, res) => {
             return res.status(400).json({ error: 'Produto com este nome já cadastrado' });
         }
 
-        const novoProduto = await Produto.create({ nome, descricao, preco, estoque, categorias, eh_alcoolico });
+        const novoProduto = await Produto.create({ nome, descricao, categorias, eh_alcoolico });
 
         return res.status(201).json(novoProduto);
     } catch (error) {
@@ -30,13 +30,11 @@ exports.createProduto = async (req, res) => {
 // 🔹 Buscar produtos com filtros dinâmicos
 exports.getAllProdutos = async (req, res) => {
     try {
-        const { nome, preco_min, preco_max, estoque_min, estoque_max, categorias, eh_alcoolico, ordenacao, limite } = req.query;
+        const { nome, categorias, eh_alcoolico, ordenacao, limite } = req.query;
 
         let whereClause = {};
 
         if (nome) whereClause.nome = { [Op.iLike]: `%${nome}%` };
-        if (preco_min || preco_max) whereClause.preco = { [Op.between]: [preco_min || 0, preco_max || Number.MAX_VALUE] };
-        if (estoque_min || estoque_max) whereClause.estoque = { [Op.between]: [estoque_min || 0, estoque_max || Number.MAX_VALUE] };
         if (categorias) whereClause.categorias = { [Op.contains]: [categorias] };
         if (eh_alcoolico !== undefined) whereClause.eh_alcoolico = eh_alcoolico === 'true';
 

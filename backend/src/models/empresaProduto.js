@@ -1,6 +1,6 @@
 const { Model, DataTypes } = require('sequelize');
 
-class ProdutoSubproduto extends Model {
+class EmpresaProduto extends Model {
   static init(sequelize) {
     super.init(
       {
@@ -9,38 +9,41 @@ class ProdutoSubproduto extends Model {
           defaultValue: DataTypes.UUIDV4,
           primaryKey: true
         },
+        empresa_id: {
+          type: DataTypes.UUID,
+          allowNull: false,
+          references: { model: 'pessoaJuridica', key: 'id' },
+          onDelete: 'CASCADE'
+        },
         produto_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: 'pedido', key: 'id' },
-          onDelete: 'CASCADE' 
-        },
-        subproduto_id: {
-          type: DataTypes.UUID,
-          allowNull: false,
-          references: { model: 'subproduto', key: 'id' },
+          references: { model: 'produto', key: 'id' },
           onDelete: 'CASCADE'
         },
-        obrigatorio: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false
+        preco: {
+          type: DataTypes.DECIMAL(10, 2),
+          allowNull: false
         },
-        ativo: {
-          type: DataTypes.BOOLEAN,
-          defaultValue: false
+        estoque: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+          validate: {
+            min: 0
+          }
         }
       },
       {
         sequelize,
-        modelName: 'ProdutoSubproduto',
-        tableName: 'produto_subproduto',
+        modelName: 'EmpresaProduto',
+        tableName: 'empresa_produtos',
         timestamps: true,
         createdAt: 'criado_em',
         updatedAt: 'modificado_em',
         indexes: [
           {
             unique: true,
-            fields: ['produto_id', 'subproduto_id']
+            fields: ['empresa_id', 'produto_id']
           }
         ]
       }
@@ -48,9 +51,9 @@ class ProdutoSubproduto extends Model {
   }
 
   static associate(models) {
+    this.belongsTo(models.PessoaJuridica, { foreignKey: 'empresa_id', as: 'empresa', onDelete: 'CASCADE' });
     this.belongsTo(models.Produto, { foreignKey: 'produto_id', as: 'produto', onDelete: 'CASCADE' });
-    this.belongsTo(models.Subproduto, { foreignKey: 'subproduto_id', as: 'subproduto', onDelete: 'CASCADE' });
   }
 }
 
-module.exports = ProdutoSubproduto;
+module.exports = EmpresaProduto;

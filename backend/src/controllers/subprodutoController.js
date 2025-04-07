@@ -6,10 +6,10 @@ exports.createSubproduto = async (req, res) => {
     try {
         console.log("Recebendo requisição para criar subproduto:", req.body);
 
-        const { nome, descricao, preco, estoque } = req.body;
+        const { nome, descricao } = req.body;
 
-        if (!nome || preco == null || estoque == null) {
-            return res.status(400).json({ error: 'Nome, preço e estoque são obrigatórios' });
+        if (!nome) {
+            return res.status(400).json({ error: 'Nome é obrigatório' });
         }
 
         // Verificar se já existe um subproduto com o mesmo nome
@@ -18,7 +18,7 @@ exports.createSubproduto = async (req, res) => {
             return res.status(400).json({ error: 'Já existe um subproduto com esse nome' });
         }
 
-        const novoSubproduto = await Subproduto.create({ nome, descricao, preco, estoque });
+        const novoSubproduto = await Subproduto.create({ nome, descricao });
         return res.status(201).json(novoSubproduto);
     } catch (error) {
         console.error("Erro ao criar subproduto:", error);
@@ -29,14 +29,12 @@ exports.createSubproduto = async (req, res) => {
 // 🔹 Buscar subprodutos com filtros dinâmicos
 exports.getAllSubprodutos = async (req, res) => {
     try {
-        const { nome, preco_min, preco_max, estoque_min, estoque_max, ordenacao, limite } = req.query;
+        const { nome, ordenacao, limite } = req.query;
 
         let whereClause = {};
 
         if (nome) whereClause.nome = { [Op.iLike]: `%${nome}%` };
-        if (preco_min || preco_max) whereClause.preco = { [Op.between]: [preco_min || 0, preco_max || Number.MAX_VALUE] };
-        if (estoque_min || estoque_max) whereClause.estoque = { [Op.between]: [estoque_min || 0, estoque_max || Number.MAX_VALUE] };
-
+        
         const subprodutos = await Subproduto.findAll({
             where: whereClause,
             order: [['criado_em', ordenacao === 'asc' ? 'ASC' : 'DESC']],

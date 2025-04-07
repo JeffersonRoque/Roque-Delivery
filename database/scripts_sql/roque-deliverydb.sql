@@ -50,8 +50,6 @@ CREATE TABLE Produtos (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     nome VARCHAR(100) UNIQUE NOT NULL,
     descricao TEXT,
-    preco DECIMAL(10,2) NOT NULL ,
-    estoque INT NOT NULL CHECK (estoque >= 0),
     categorias VARCHAR(50),
 	eh_alcoolico BOOLEAN DEFAULT FALSE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -63,12 +61,11 @@ CREATE TABLE Subprodutos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nome VARCHAR(100) UNIQUE NOT NULL,
     descricao TEXT,
-    preco DECIMAL(10,2) NOT NULL CHECK (preco >= 0),
-    estoque INT NOT NULL CHECK (estoque >= 0),
     criado_em TIMESTAMP DEFAULT NOW(),
     modificado_em TIMESTAMP DEFAULT NOW()
 );
 
+-- Tabela de relacionamento produtos com subprodutos
 CREATE TABLE Produto_Subproduto (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     produto_id UUID NOT NULL REFERENCES Produtos(id) ON DELETE CASCADE,
@@ -76,7 +73,32 @@ CREATE TABLE Produto_Subproduto (
     obrigatorio BOOLEAN DEFAULT FALSE,
     ativo BOOLEAN DEFAULT FALSE,
     criado_em TIMESTAMP DEFAULT NOW(),
-    modificado_em TIMESTAMP DEFAULT NOW()
+    modificado_em TIMESTAMP DEFAULT NOW(),
+    UNIQUE (produto_id, subproduto_id)
+);
+
+-- Tabela de relacionamento Pessoa Juridica e produtos
+CREATE TABLE Empresa_Produtos (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    empresa_id UUID NOT NULL REFERENCES Pessoa_Juridica(id) ON DELETE CASCADE,
+    produto_id UUID NOT NULL REFERENCES Produtos(id) ON DELETE CASCADE,
+    preco DECIMAL(10, 2) NOT NULL,
+    estoque INT NOT NULL CHECK (estoque >= 0),
+    criado_em TIMESTAMP DEFAULT NOW(),
+    modificado_em TIMESTAMP DEFAULT NOW(),
+    UNIQUE (empresa_id, produto_id)
+);
+
+-- Tabela de relacionamento Pessoa Juridica e subprodutos
+CREATE TABLE Empresa_Subprodutos (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),    
+    empresa_id UUID NOT NULL REFERENCES Pessoa_Juridica(id) ON DELETE CASCADE,
+    subproduto_id UUID NOT NULL REFERENCES Subprodutos(id) ON DELETE CASCADE,
+    preco DECIMAL(10, 2) NOT NULL,
+    estoque INT NOT NULL CHECK (estoque >= 0),
+    criado_em TIMESTAMP DEFAULT NOW(),
+    modificado_em TIMESTAMP DEFAULT NOW(),
+    UNIQUE (empresa_id, subproduto_id)
 );
 
 -- Tabela para pedidos
@@ -94,20 +116,20 @@ CREATE TABLE Pedidos (
 CREATE TABLE Itens_Pedido (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     pedido_id UUID NOT NULL REFERENCES Pedidos(id) ON DELETE CASCADE,
-    produto_id UUID NOT NULL REFERENCES Produtos(id) ON DELETE CASCADE,
+    empresa_produto_id UUID NOT NULL REFERENCES Empresa_Produtos(id) ON DELETE CASCADE,
     quantidade INT NOT NULL,
 	preco_unitario DECIMAL(10,2) NOT NULL, -- Adicionando o preço unitário
-    preco DECIMAL(10,2) NOT NULL -- Multiplicação entre preco_unitario * quantidade
+    subtotal DECIMAL(10, 2) GENERATED ALWAYS AS (quantidade * preco_unitario) STORED -- Multiplicação entre preco_unitario * quantidade
 );
 
 -- Tabela de relação entre Itens_Pedido e Subprodutos
 CREATE TABLE Itens_Pedido_Subprodutos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     item_pedido_id UUID NOT NULL REFERENCES Itens_Pedido(id) ON DELETE CASCADE,
-    subproduto_id UUID NOT NULL REFERENCES Subprodutos(id) ON DELETE CASCADE,
+    empresa_subproduto_id UUID NOT NULL REFERENCES Empresa_Subprodutos(id) ON DELETE CASCADE,
     quantidade INT NOT NULL CHECK (quantidade > 0),
     preco_unitario DECIMAL(10,2) NOT NULL, -- Adicionando o preço unitário
-    preco DECIMAL(10,2) NOT NULL -- Multiplicação entre preco_unitario * quantidade
+    subtotal DECIMAL(10, 2) GENERATED ALWAYS AS (quantidade * preco_unitario) STORED -- Multiplicação entre preco_unitario * quantidade
 );
 
 -- Tabela de entrega dos produtos
@@ -200,12 +222,11 @@ CREATE TABLE Cashback_Transacoes (
 
 CREATE TABLE Cashback_Produtos (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    produto_id UUID REFERENCES Produtos(id) ON DELETE CASCADE,
+    empresa_produto_id UUID REFERENCES Empresa_Produtos(id) ON DELETE CASCADE,
     percentual_cashback DECIMAL(5,2) CHECK (percentual_cashback >= 0),
---  valor_fixo_cashback DECIMAL(10,2) CHECK (valor_fixo_cashback >= 0),
     ativo BOOLEAN DEFAULT TRUE,
-	criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tabela das Avalições de clientes
@@ -245,7 +266,6 @@ CREATE TABLE Audit_Logs (
 CREATE INDEX idx_pedidos_pessoa ON Pedidos(pessoa_id);
 CREATE INDEX idx_motoristas_funcionarios ON Motoristas(id);
 CREATE INDEX idx_itens_pedido ON Itens_Pedido(pedido_id);
-CREATE INDEX idx_itens_produto ON Itens_Pedido(produto_id);
 CREATE INDEX idx_Pessoas_email ON Pessoas(email);
 CREATE INDEX idx_Pessoas_telefone ON Pessoas(telefone);
 CREATE INDEX idx_pagamentos_pedido_id ON Pagamentos (pedido_id);
@@ -304,19 +324,19 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Caso um novo item seja inserido no pedido, reduz o estoque
     IF TG_OP = 'INSERT' THEN
-        UPDATE Produtos 
+        UPDATE Empresa_Produtos  
         SET estoque = estoque - NEW.quantidade, modificado_em = CURRENT_TIMESTAMP
-        WHERE id = NEW.produto_id;
+        WHERE id = NEW.empresa_produto_id;
     -- Caso a quantidade de um item seja alterada (UPDATE)
     ELSIF TG_OP = 'UPDATE' THEN
-        UPDATE Produtos 
+        UPDATE Empresa_Produtos  
         SET estoque = estoque + OLD.quantidade - NEW.quantidade, modificado_em = CURRENT_TIMESTAMP
-        WHERE id = NEW.produto_id;
+        WHERE id = NEW.empresa_produto_id;
     -- Caso um item seja removido do pedido, reverte a quantidade no estoque
     ELSIF TG_OP = 'DELETE' THEN
-        UPDATE Produtos 
+        UPDATE Empresa_Produtos  
         SET estoque = estoque + OLD.quantidade, modificado_em = CURRENT_TIMESTAMP
-        WHERE id = OLD.produto_id;
+        WHERE id = OLD.empresa_produto_id;
     END IF;
     
     RETURN NEW;
@@ -335,12 +355,15 @@ DECLARE
     estoque_atual INT;
 BEGIN
     -- Buscar estoque atual e tratar caso o produto não exista
-    SELECT COALESCE(estoque, 0) INTO estoque_atual FROM Produtos WHERE id = NEW.produto_id;
+    SELECT COALESCE(estoque, 0)
+    INTO estoque_atual
+    FROM Empresa_Produtos
+    WHERE id = NEW.empresa_produto_id;
 
     -- Se o estoque for insuficiente, lançar erro
     IF estoque_atual < NEW.quantidade THEN
         RAISE EXCEPTION 'Estoque insuficiente para o produto %: disponível = %, solicitado = %',
-            NEW.produto_id, estoque_atual, NEW.quantidade;
+            NEW.empresa_produto_id, estoque_atual, NEW.quantidade;
     END IF;
 
     RETURN NEW;
@@ -359,22 +382,22 @@ RETURNS TRIGGER AS $$
 BEGIN  
     -- Reduz o estoque ao adicionar um subproduto ao pedido  
     IF TG_OP = 'INSERT' THEN  
-        UPDATE Subprodutos  
+        UPDATE Empresa_Subprodutos  
         SET estoque = estoque - NEW.quantidade, modificado_em = CURRENT_TIMESTAMP  
-        WHERE id = NEW.subproduto_id;  
+        WHERE id = NEW.empresa_subproduto_id; 
 
     -- Se a quantidade for alterada, ajusta o estoque proporcionalmente  
     ELSIF TG_OP = 'UPDATE' THEN  
-        UPDATE Subprodutos  
+        UPDATE Empresa_Subprodutos  
         SET estoque = estoque + OLD.quantidade - NEW.quantidade, modificado_em = CURRENT_TIMESTAMP  
-        WHERE id = NEW.subproduto_id;  
+        WHERE id = NEW.empresa_subproduto_id;   
 
     -- Se o subproduto for removido do pedido, devolve a quantidade ao estoque  
     ELSIF TG_OP = 'DELETE' THEN  
-        UPDATE Subprodutos  
+        UPDATE Empresa_Subprodutos  
         SET estoque = estoque + OLD.quantidade, modificado_em = CURRENT_TIMESTAMP  
-        WHERE id = OLD.subproduto_id;  
-    END IF;  
+        WHERE id = OLD.empresa_subproduto_id;  
+    END IF;   
 
     RETURN NEW;  
 END;  
@@ -393,12 +416,15 @@ DECLARE
     estoque_atual INT;  
 BEGIN  
     -- Busca o estoque atual do subproduto  
-    SELECT COALESCE(estoque, 0) INTO estoque_atual FROM Subprodutos WHERE id = NEW.subproduto_id;  
+    SELECT COALESCE(estoque, 0)  
+    INTO estoque_atual  
+    FROM Empresa_Subprodutos  
+    WHERE id = NEW.empresa_subproduto_id;  
 
     -- Se o estoque for insuficiente, impede a operação  
     IF estoque_atual < NEW.quantidade THEN  
         RAISE EXCEPTION 'Estoque insuficiente para o subproduto %: disponível = %, solicitado = %',  
-            NEW.subproduto_id, estoque_atual, NEW.quantidade;  
+            NEW.empresa_produto_id, estoque_atual, NEW.quantidade;  
     END IF;  
 
     RETURN NEW;  

@@ -1,14 +1,14 @@
-const { ItemPedido, Pedido, Produto } = require('../models');
-const { Op, fn, col, literal } = require('sequelize'); // Operadores para filtros dinâmicos
+const { ItemPedido, Pedido, empresaProduto } = require('../models');
+const { Op, fn, col, literal } = require('sequelize');
 
 // 🔹 Criar um novo item no pedido
 exports.createItemPedido = async (req, res) => {
     try {
         console.log("Recebendo requisição para adicionar item ao pedido:", req.body);
 
-        const { pedido_id, produto_id, quantidade, preco_unitario } = req.body;
+        const { pedido_id, empresa_produto_id, quantidade, preco_unitario } = req.body;
 
-        if (!pedido_id || !produto_id || !quantidade || !preco_unitario) {
+        if (!pedido_id || !empresa_produto_id || !quantidade || !preco_unitario) {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
         }
 
@@ -17,26 +17,23 @@ exports.createItemPedido = async (req, res) => {
             return res.status(404).json({ error: 'Pedido não encontrado' });
         }
 
-        const produto = await Produto.findByPk(produto_id);
+        const produto = await empresaProduto.findByPk(empresa_produto_id);
         if (!produto) {
-            return res.status(404).json({ error: 'Produto não encontrado' });
+            return res.status(404).json({ error: 'Produto da empresa não encontrado' });
         }
 
-        const preco = preco_unitario * quantidade;
+        const subtotal = preco_unitario * quantidade;
 
         try {
-            // Criar item do pedido (trigger impede estoque negativo)
-            const novoItemPedido = await ItemPedido.create({ pedido_id, produto_id, quantidade, preco_unitario, preco });
+            const novoItemPedido = await ItemPedido.create({ pedido_id, empresa_produto_id, quantidade, preco_unitario, subtotal });
 
-            // Buscar estoque atualizado após a inserção
-            const produtoAtualizado = await Produto.findByPk(produto_id);
+            const produtoAtualizado = await empresaProduto.findByPk(empresa_produto_id);
 
             return res.status(201).json({ itemPedido: novoItemPedido, estoque_atualizado: produtoAtualizado.estoque });
 
         } catch (error) {
             console.error("Erro ao adicionar item ao pedido:", error);
 
-            // Captura erro da trigger de estoque insuficiente
             if (error.message.includes("Estoque insuficiente para o produto")) {
                 return res.status(400).json({ error: 'Estoque insuficiente para este produto. Verifique a quantidade disponível antes de tentar novamente.' });
             }
@@ -52,11 +49,11 @@ exports.createItemPedido = async (req, res) => {
 // 🔹 Buscar Itens de Pedido com Filtros Dinâmicos
 exports.getItensPedidos = async (req, res) => {
     try {
-        const { pedido_id, produto_id, data_inicio, data_fim } = req.query;
+        const { pedido_id, empresa_produto_id, data_inicio, data_fim } = req.query;
 
         let where = {};
         if (pedido_id) where.pedido_id = pedido_id;
-        if (produto_id) where.produto_id = produto_id;
+        if (empresa_produto_id) where.empresa_produto_id = empresa_produto_id;
         if (data_inicio && data_fim) {
             where.createdAt = { [Op.between]: [new Date(data_inicio), new Date(data_fim)] };
         }
@@ -65,7 +62,7 @@ exports.getItensPedidos = async (req, res) => {
             where,
             include: [
                 { model: Pedido, as: 'pedido' },
-                { model: Produto, as: 'produto' }
+                { model: empresaProduto, as: 'empresaProduto' }
             ]
         });
 
@@ -86,7 +83,10 @@ exports.getItemPedidoById = async (req, res) => {
         }
 
         const itemPedido = await ItemPedido.findByPk(id, {
-            include: [{ model: Pedido, as: 'pedido' }, { model: Produto, as: 'produto' }]
+            include: [
+                { model: Pedido, as: 'pedido' },
+                { model: empresaProduto, as: 'empresaProduto' }
+            ]
         });
 
         if (!itemPedido) {
@@ -103,10 +103,10 @@ exports.getItemPedidoById = async (req, res) => {
 exports.getProdutosMaisPedidos = async (req, res) => {
     try {
         const produtosMaisPedidos = await ItemPedido.findAll({
-            attributes: ['produto_id', [fn('SUM', col('quantidade')), 'total_vendido']],
-            group: ['produto_id'],
+            attributes: ['empresa_produto_id', [fn('SUM', col('quantidade')), 'total_vendido']],
+            group: ['empresa_produto_id'],
             order: [[literal('total_vendido'), 'DESC']],
-            include: [{ model: Produto, as: 'produto' }]
+            include: [{ model: empresaProduto, as: 'empresaProduto' }]
         });
 
         res.json(produtosMaisPedidos);
@@ -120,9 +120,9 @@ exports.getProdutosMaisPedidos = async (req, res) => {
 exports.getTotalVendasPorProduto = async (req, res) => {
     try {
         const totalVendasPorProduto = await ItemPedido.findAll({
-            attributes: ['produto_id', [fn('SUM', col('preco')), 'total_faturado']],
-            group: ['produto_id'],
-            include: [{ model: Produto, as: 'produto' }]
+            attributes: ['empresa_produto_id', [fn('SUM', col('preco')), 'total_faturado']],
+            group: ['empresa_produto_id'],
+            include: [{ model: empresaProduto, as: 'empresaProduto' }]
         });
 
         res.json(totalVendasPorProduto);
@@ -147,20 +147,16 @@ exports.updateItemPedido = async (req, res) => {
             return res.status(404).json({ error: 'Item de pedido não encontrado' });
         }
 
-        const produto = await Produto.findByPk(itemPedido.produto_id);
+        const produto = await empresaProduto.findByPk(itemPedido.empresa_produto_id);
         if (!produto) {
-            return res.status(404).json({ error: 'Produto não encontrado' });
+            return res.status(404).json({ error: 'Produto da empresa não encontrado' });
         }
 
-        const diferencaQuantidade = quantidade - itemPedido.quantidade;
-
         try {
-            // Atualiza o item do pedido
-            const preco = preco_unitario * quantidade;
-            await itemPedido.update({ quantidade, preco_unitario, preco });
+            const subtotal = preco_unitario * quantidade;
+            await itemPedido.update({ quantidade, preco_unitario, subtotal });
 
-            // Buscar estoque atualizado após a alteração
-            const produtoAtualizado = await Produto.findByPk(produto.id);
+            const produtoAtualizado = await empresaProduto.findByPk(produto.id);
 
             res.json({ itemPedido, estoque_atualizado: produtoAtualizado.estoque });
 
@@ -194,11 +190,9 @@ exports.deleteItemPedido = async (req, res) => {
         }
 
         try {
-            // Deletar o item do pedido
             await itemPedido.destroy();
 
-            // Buscar estoque atualizado após a remoção
-            const produtoAtualizado = await Produto.findByPk(itemPedido.produto_id);
+            const produtoAtualizado = await empresaProduto.findByPk(itemPedido.empresa_produto_id);
 
             res.status(204).json({ message: "Item removido com sucesso", estoque_atualizado: produtoAtualizado.estoque });
 

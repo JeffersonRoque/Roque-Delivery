@@ -15,10 +15,10 @@ class ItemPedidoSubproduto extends Model {
           references: { model: 'itemPedido', key: 'id' },
           onDelete: 'CASCADE'
         },
-        subproduto_id: {
+        empresa_subproduto_id: {
           type: DataTypes.UUID,
           allowNull: false,
-          references: { model: 'subproduto', key: 'id' },
+          references: { model: 'empresaSubproduto', key: 'id' },
           onDelete: 'CASCADE'
         },
         quantidade: {
@@ -32,7 +32,7 @@ class ItemPedidoSubproduto extends Model {
           type: DataTypes.DECIMAL(10, 2),
           allowNull: false
         },
-        preco: {
+        subtotal: {
           type: DataTypes.DECIMAL(10, 2),
           allowNull: false
         }
@@ -48,7 +48,7 @@ class ItemPedidoSubproduto extends Model {
 
   static associate(models) {
     this.belongsTo(models.ItemPedido, { foreignKey: 'item_pedido_id', as: 'itemPedido', onDelete: 'CASCADE' });
-    this.belongsTo(models.Subproduto, { foreignKey: 'subproduto_id', as: 'subproduto', onDelete: 'CASCADE' });
+    this.belongsTo(models.EmpresaSubproduto, { foreignKey: 'empresa_subproduto_id', as: 'subproduto', onDelete: 'CASCADE' });
   }
 }
 

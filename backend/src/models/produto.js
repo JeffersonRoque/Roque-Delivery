@@ -16,15 +16,6 @@ class Produto extends Model {
         descricao: {
           type: DataTypes.TEXT,
         },
-        preco: {
-          type: DataTypes.DECIMAL(10, 2),
-          allowNull: false
-        },
-        estoque: {
-          type: DataTypes.INTEGER,
-          allowNull: false,
-          validate: {min: 0} // Garante que o estoque seja >= 0
-        },
         categorias: {
           type: DataTypes.STRING
         },

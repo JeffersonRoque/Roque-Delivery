@@ -7,6 +7,8 @@ const cashbackProduto = require('./routes/cashbackProdutoRoutes');
 const cashbackTransacao = require('./routes/cashbackTransacaoRoutes');
 const cupomRoutes = require('./routes/cupomRoutes');
 const cupomPessoaRoutes = require('./routes/cupomPessoaRoutes');
+const empresaProdutoRoutes = require('./routes/empresaProdutoRoutes');
+const empresaSubprodutoRoutes = require('./routes/empresaSubprodutoRoutes');
 const entregaRoutes = require('./routes/entregaRoutes');
 const funcionarioRoutes = require('./routes/funcionarioRoutes');
 const itemPedidoRoutes = require('./routes/itemPedidoRoutes');
@@ -35,6 +37,8 @@ app.use('/cashback-produtos', cashbackProduto)
 app.use('/cashbach-transacoes', cashbackTransacao);
 app.use('/cupons', cupomRoutes);
 app.use('/cupons-pessoas', cupomPessoaRoutes);
+app.use('/empresa-produtos', empresaProdutoRoutes);
+app.use('/empresa-subprodutos', empresaSubprodutoRoutes);
 app.use('/entregas', entregaRoutes);
 app.use('/funcionarios', funcionarioRoutes);
 app.use('/itens-pedidos', itemPedidoRoutes);

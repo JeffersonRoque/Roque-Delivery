@@ -5,14 +5,14 @@ const { Op } = require('sequelize'); // Operadores para consultas
 exports.createCashbackProduto = async (req, res) => {
     try {
         console.log("Recebendo requisição para criar Cashback de Produto:", req.body);
-        const { produto_id, percentual_cashback, ativo } = req.body;
+        const { empresa_produto_id, percentual_cashback, ativo } = req.body;
 
-        if (!produto_id || percentual_cashback === undefined) {
+        if (!empresa_produto_id || percentual_cashback === undefined) {
             return res.status(400).json({ error: 'Produto e percentual de cashback são obrigatórios' });
         }
 
         const novoCashback = await CashbackProduto.create({
-            produto_id,
+            empresa_produto_id,
             percentual_cashback,
             ativo
         });
